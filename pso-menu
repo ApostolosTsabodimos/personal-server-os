@@ -1,0 +1,637 @@
+#!/bin/bash
+# PSO Interactive Menu
+# User-friendly interface for all PSO commands
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+PURPLE='\033[0;35m'
+NC='\033[0m' # No Color
+
+# Emoji for better UX
+CHECK="✓"
+CROSS="✗"
+ARROW="→"
+WARN="⚠"
+
+clear
+
+show_header() {
+    echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║${NC}                  ${GREEN}PSO - Personal Server OS${NC}                  ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}                  Interactive Control Panel                ${CYAN}║${NC}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+}
+
+show_main_menu() {
+    show_header
+    echo -e "${YELLOW}Main Menu:${NC}"
+    echo ""
+    echo -e "  ${GREEN}1${NC}) 📦 Service Management"
+    echo -e "  ${GREEN}2${NC}) 📚 Service Catalog"
+    echo -e "  ${GREEN}3${NC}) 🛡️  Firewall & Tiers"
+    echo -e "  ${GREEN}4${NC}) 💚 Health Monitoring"
+    echo -e "  ${GREEN}5${NC}) 👤 User Management"
+    echo -e "  ${GREEN}6${NC}) 💾 Backup Management"
+    echo -e "  ${GREEN}7${NC}) 📊 Development Tools"
+    echo -e "  ${GREEN}8${NC}) 📖 Documentation"
+    echo -e "  ${GREEN}9${NC}) ⚙️  System Info"
+    echo -e "  ${RED}0${NC}) 🚪 Exit"
+    echo ""
+    read -p "Select option: " choice
+    
+    case $choice in
+        1) service_menu ;;
+        2) catalog_menu ;;
+        3) firewall_menu ;;
+        4) health_menu ;;
+        5) user_menu ;;
+        6) backup_menu ;;
+        7) dev_menu ;;
+        8) docs_menu ;;
+        9) system_info ;;
+        0) exit 0 ;;
+        *) 
+            echo -e "${RED}Invalid option${NC}"
+            sleep 1
+            show_main_menu
+            ;;
+    esac
+}
+
+service_menu() {
+    clear
+    show_header
+    echo -e "${YELLOW}Service Management:${NC}"
+    echo ""
+    echo -e "  ${GREEN}1${NC}) List all services"
+    echo -e "  ${GREEN}2${NC}) List installed services"
+    echo -e "  ${GREEN}3${NC}) Install a service"
+    echo -e "  ${GREEN}4${NC}) Uninstall a service"
+    echo -e "  ${GREEN}5${NC}) Start a service"
+    echo -e "  ${GREEN}6${NC}) Stop a service"
+    echo -e "  ${GREEN}7${NC}) Restart a service"
+    echo -e "  ${GREEN}8${NC}) View service logs"
+    echo -e "  ${GREEN}9${NC}) Check service status"
+    echo -e "  ${RED}0${NC}) ← Back to main menu"
+    echo ""
+    read -p "Select option: " choice
+    
+    case $choice in
+        1) 
+            ./pso list
+            press_any_key
+            service_menu
+            ;;
+        2)
+            ./pso list | grep "Status: running\|Status: stopped"
+            press_any_key
+            service_menu
+            ;;
+        3)
+            read -p "Enter service ID to install: " service_id
+            ./pso install "$service_id"
+            press_any_key
+            service_menu
+            ;;
+        4)
+            read -p "Enter service ID to uninstall: " service_id
+            echo -e "${YELLOW}Are you sure? This will remove all data! (y/N)${NC}"
+            read -p "> " confirm
+            if [ "$confirm" = "y" ]; then
+                ./pso uninstall "$service_id"
+            fi
+            press_any_key
+            service_menu
+            ;;
+        5)
+            read -p "Enter service ID to start: " service_id
+            ./pso start "$service_id"
+            press_any_key
+            service_menu
+            ;;
+        6)
+            read -p "Enter service ID to stop: " service_id
+            ./pso stop "$service_id"
+            press_any_key
+            service_menu
+            ;;
+        7)
+            read -p "Enter service ID to restart: " service_id
+            ./pso restart "$service_id"
+            press_any_key
+            service_menu
+            ;;
+        8)
+            read -p "Enter service ID: " service_id
+            echo -e "${CYAN}Fetching logs for $service_id...${NC}"
+            docker logs "pso-$service_id" --tail 50
+            press_any_key
+            service_menu
+            ;;
+        9)
+            read -p "Enter service ID: " service_id
+            ./pso status "$service_id" 2>/dev/null || docker ps -a | grep "pso-$service_id"
+            press_any_key
+            service_menu
+            ;;
+        0) show_main_menu ;;
+        *) 
+            echo -e "${RED}Invalid option${NC}"
+            sleep 1
+            service_menu
+            ;;
+    esac
+}
+
+catalog_menu() {
+    clear
+    show_header
+    echo -e "${YELLOW}Service Catalog:${NC}"
+    echo ""
+    echo -e "  ${GREEN}1${NC}) Browse all available services"
+    echo -e "  ${GREEN}2${NC}) View service descriptions"
+    echo -e "  ${GREEN}3${NC}) View service dependencies"
+    echo -e "  ${GREEN}4${NC}) View dependencies for specific service"
+    echo -e "  ${GREEN}5${NC}) Search services by category"
+    echo -e "  ${RED}0${NC}) ← Back to main menu"
+    echo ""
+    read -p "Select option: " choice
+    
+    case $choice in
+        1)
+            ./pso catalog
+            press_any_key
+            catalog_menu
+            ;;
+        2)
+            ./pso catalog descriptions
+            press_any_key
+            catalog_menu
+            ;;
+        3)
+            ./pso catalog depends
+            press_any_key
+            catalog_menu
+            ;;
+        4)
+            read -p "Enter service ID: " service_id
+            ./pso catalog depends "$service_id"
+            press_any_key
+            catalog_menu
+            ;;
+        5)
+            echo ""
+            echo -e "${CYAN}Available categories:${NC}"
+            echo "  - infrastructure"
+            echo "  - media"
+            echo "  - productivity"
+            echo "  - home-automation"
+            echo "  - monitoring"
+            echo "  - other"
+            echo ""
+            read -p "Enter category: " category
+            ./pso catalog | grep -i "$category"
+            press_any_key
+            catalog_menu
+            ;;
+        0) show_main_menu ;;
+        *) 
+            echo -e "${RED}Invalid option${NC}"
+            sleep 1
+            catalog_menu
+            ;;
+    esac
+}
+
+firewall_menu() {
+    clear
+    show_header
+    echo -e "${YELLOW}Firewall & Tier Management:${NC}"
+    echo ""
+    echo -e "  ${GREEN}1${NC}) 📊 View tier definitions"
+    echo -e "  ${GREEN}2${NC}) 📋 List all service tiers"
+    echo -e "  ${GREEN}3${NC}) 🔍 Check service tier"
+    echo -e "  ${GREEN}4${NC}) 🔼 Promote service tier"
+    echo -e "  ${GREEN}5${NC}) 🔽 Demote service tier"
+    echo -e "  ${GREEN}6${NC}) 📜 View tier change history"
+    echo -e "  ${RED}7${NC}) ${WARN}  Emergency: Reset all to Tier 0"
+    echo -e "  ${RED}0${NC}) ← Back to main menu"
+    echo ""
+    read -p "Select option: " choice
+    
+    case $choice in
+        1)
+            python -m core.firewall_manager tiers
+            press_any_key
+            firewall_menu
+            ;;
+        2)
+            python -m core.firewall_manager list
+            press_any_key
+            firewall_menu
+            ;;
+        3)
+            read -p "Enter service ID: " service_id
+            python -m core.firewall_manager status "$service_id"
+            press_any_key
+            firewall_menu
+            ;;
+        4)
+            read -p "Enter service ID: " service_id
+            echo ""
+            echo -e "${CYAN}Available tiers:${NC}"
+            echo -e "  ${GREEN}0${NC} - 🟢 Internal Only (127.0.0.1)"
+            echo -e "  ${GREEN}1${NC} - 🟡 LAN Only (192.168.x.x)"
+            echo -e "  ${GREEN}2${NC} - 🔵 VPN Access (Tailscale/WireGuard)"
+            echo -e "  ${RED}3${NC} - 🔴 Internet Exposed (PUBLIC - DANGER)"
+            echo ""
+            read -p "Enter new tier (0-3): " new_tier
+            
+            if [ "$new_tier" = "3" ]; then
+                echo ""
+                echo -e "${RED}${WARN} WARNING: Tier 3 exposes this service to the PUBLIC INTERNET!${NC}"
+                echo -e "${YELLOW}Are you absolutely sure? (type 'yes' to confirm)${NC}"
+                read -p "> " confirm
+                if [ "$confirm" != "yes" ]; then
+                    echo -e "${GREEN}Cancelled.${NC}"
+                    sleep 1
+                    firewall_menu
+                    return
+                fi
+            fi
+            
+            sudo python -m core.firewall_manager set "$service_id" "$new_tier"
+            echo ""
+            echo -e "${GREEN}${CHECK} Tier changed successfully${NC}"
+            echo -e "${YELLOW}Remember to restart the service for changes to take effect!${NC}"
+            press_any_key
+            firewall_menu
+            ;;
+        5)
+            read -p "Enter service ID: " service_id
+            echo ""
+            python -m core.firewall_manager status "$service_id"
+            echo ""
+            read -p "Enter new tier (0-3, lower = safer): " new_tier
+            sudo python -m core.firewall_manager set "$service_id" "$new_tier"
+            press_any_key
+            firewall_menu
+            ;;
+        6)
+            read -p "Enter service ID: " service_id
+            python -m core.firewall_manager history "$service_id"
+            press_any_key
+            firewall_menu
+            ;;
+        7)
+            echo ""
+            echo -e "${RED}${WARN} WARNING: This will reset ALL services to Tier 0 (Internal Only)${NC}"
+            echo -e "${YELLOW}Type 'RESET' to confirm:${NC}"
+            read -p "> " confirm
+            if [ "$confirm" = "RESET" ]; then
+                python -m core.firewall_manager reset-all
+            else
+                echo -e "${GREEN}Cancelled.${NC}"
+            fi
+            press_any_key
+            firewall_menu
+            ;;
+        0) show_main_menu ;;
+        *) 
+            echo -e "${RED}Invalid option${NC}"
+            sleep 1
+            firewall_menu
+            ;;
+    esac
+}
+
+health_menu() {
+    clear
+    show_header
+    echo -e "${YELLOW}Health Monitoring:${NC}"
+    echo ""
+    echo -e "  ${GREEN}1${NC}) View all health status"
+    echo -e "  ${GREEN}2${NC}) Check specific service health"
+    echo -e "  ${GREEN}3${NC}) View health history"
+    echo -e "  ${GREEN}4${NC}) Manual health check"
+    echo -e "  ${GREEN}5${NC}) Start health monitor (foreground)"
+    echo -e "  ${RED}0${NC}) ← Back to main menu"
+    echo ""
+    read -p "Select option: " choice
+    
+    case $choice in
+        1)
+            python -m core.health_monitor status
+            press_any_key
+            health_menu
+            ;;
+        2)
+            read -p "Enter service ID: " service_id
+            python -m core.health_monitor check "$service_id"
+            press_any_key
+            health_menu
+            ;;
+        3)
+            read -p "Enter service ID: " service_id
+            python -m core.health_monitor history "$service_id"
+            press_any_key
+            health_menu
+            ;;
+        4)
+            read -p "Enter service ID: " service_id
+            echo -e "${CYAN}Running manual health check...${NC}"
+            python -m core.health_monitor check "$service_id"
+            press_any_key
+            health_menu
+            ;;
+        5)
+            echo -e "${CYAN}Starting health monitor... (Press Ctrl+C to stop)${NC}"
+            python -m core.health_monitor start
+            press_any_key
+            health_menu
+            ;;
+        0) show_main_menu ;;
+        *) 
+            echo -e "${RED}Invalid option${NC}"
+            sleep 1
+            health_menu
+            ;;
+    esac
+}
+
+user_menu() {
+    clear
+    show_header
+    echo -e "${YELLOW}User Management:${NC}"
+    echo ""
+    echo -e "  ${GREEN}1${NC}) List all users"
+    echo -e "  ${GREEN}2${NC}) Register new user"
+    echo -e "  ${GREEN}3${NC}) Register new admin"
+    echo -e "  ${GREEN}4${NC}) Test login"
+    echo -e "  ${GREEN}5${NC}) Cleanup expired sessions"
+    echo -e "  ${RED}0${NC}) ← Back to main menu"
+    echo ""
+    read -p "Select option: " choice
+    
+    case $choice in
+        1)
+            python -m core.auth list
+            press_any_key
+            user_menu
+            ;;
+        2)
+            read -p "Enter username: " username
+            read -sp "Enter password: " password
+            echo ""
+            python -m core.auth register "$username" "$password"
+            press_any_key
+            user_menu
+            ;;
+        3)
+            read -p "Enter admin username: " username
+            read -sp "Enter password: " password
+            echo ""
+            python -m core.auth register "$username" "$password" --admin
+            press_any_key
+            user_menu
+            ;;
+        4)
+            read -p "Enter username: " username
+            read -sp "Enter password: " password
+            echo ""
+            python -m core.auth login "$username" "$password"
+            press_any_key
+            user_menu
+            ;;
+        5)
+            python -m core.auth cleanup
+            echo -e "${GREEN}${CHECK} Expired sessions cleaned up${NC}"
+            press_any_key
+            user_menu
+            ;;
+        0) show_main_menu ;;
+        *) 
+            echo -e "${RED}Invalid option${NC}"
+            sleep 1
+            user_menu
+            ;;
+    esac
+}
+
+backup_menu() {
+    clear
+    show_header
+    echo -e "${YELLOW}Backup Management:${NC}"
+    echo ""
+    echo -e "  ${GREEN}1${NC}) Create backup"
+    echo -e "  ${GREEN}2${NC}) List backups"
+    echo -e "  ${GREEN}3${NC}) Restore backup"
+    echo -e "  ${RED}0${NC}) ← Back to main menu"
+    echo ""
+    read -p "Select option: " choice
+    
+    case $choice in
+        1)
+            read -p "Enter service ID: " service_id
+            read -p "Enter note (optional): " note
+            if [ -z "$note" ]; then
+                ./pso backup "$service_id"
+            else
+                ./pso backup "$service_id" --note "$note"
+            fi
+            press_any_key
+            backup_menu
+            ;;
+        2)
+            read -p "Enter service ID (or leave empty for all): " service_id
+            if [ -z "$service_id" ]; then
+                python -c "from core.backup_manager import BackupManager; bm = BackupManager(); [print(f'{b[\"service_id\"]}: {b[\"backup_path\"]}') for b in bm.list_backups()]"
+            else
+                python -c "from core.backup_manager import BackupManager; bm = BackupManager(); [print(f'{b[\"backup_path\"]}') for b in bm.list_backups('$service_id')]"
+            fi
+            press_any_key
+            backup_menu
+            ;;
+        3)
+            echo -e "${YELLOW}Restore functionality coming soon...${NC}"
+            press_any_key
+            backup_menu
+            ;;
+        0) show_main_menu ;;
+        *) 
+            echo -e "${RED}Invalid option${NC}"
+            sleep 1
+            backup_menu
+            ;;
+    esac
+}
+
+dev_menu() {
+    clear
+    show_header
+    echo -e "${YELLOW}Development Tools:${NC}"
+    echo ""
+    echo -e "  ${GREEN}1${NC}) Scan for completed components"
+    echo -e "  ${GREEN}2${NC}) Show progress tree"
+    echo -e "  ${GREEN}3${NC}) Show architecture"
+    echo -e "  ${GREEN}4${NC}) Mark component complete"
+    echo -e "  ${GREEN}5${NC}) View component info"
+    echo -e "  ${RED}0${NC}) ← Back to main menu"
+    echo ""
+    read -p "Select option: " choice
+    
+    case $choice in
+        1)
+            ./pso dev scan
+            press_any_key
+            dev_menu
+            ;;
+        2)
+            ./pso dev tree
+            press_any_key
+            dev_menu
+            ;;
+        3)
+            ./pso dev architecture
+            press_any_key
+            dev_menu
+            ;;
+        4)
+            read -p "Enter component ID: " component_id
+            ./pso dev complete "$component_id"
+            press_any_key
+            dev_menu
+            ;;
+        5)
+            read -p "Enter component ID: " component_id
+            python pso.py info "$component_id"
+            press_any_key
+            dev_menu
+            ;;
+        0) show_main_menu ;;
+        *) 
+            echo -e "${RED}Invalid option${NC}"
+            sleep 1
+            dev_menu
+            ;;
+    esac
+}
+
+docs_menu() {
+    clear
+    show_header
+    echo -e "${YELLOW}Documentation:${NC}"
+    echo ""
+    echo -e "  ${GREEN}1${NC}) Project Guide"
+    echo -e "  ${GREEN}2${NC}) Development Log"
+    echo -e "  ${GREEN}3${NC}) Commands Reference"
+    echo -e "  ${GREEN}4${NC}) Project Status"
+    echo -e "  ${GREEN}5${NC}) Tier Architecture"
+    echo -e "  ${GREEN}6${NC}) Authentication Setup"
+    echo -e "  ${GREEN}7${NC}) Health Monitor Setup"
+    echo -e "  ${GREEN}8${NC}) Firewall Setup"
+    echo -e "  ${GREEN}9${NC}) Menu Guide"
+    echo -e "  ${RED}0${NC}) ← Back to main menu"
+    echo ""
+    read -p "Select option: " choice
+    
+    # Check for viewer (bat or less)
+    if command -v bat &> /dev/null; then
+        VIEWER="bat --paging=always"
+    else
+        VIEWER="less"
+    fi
+    
+    case $choice in
+        1) $VIEWER PROJECT_GUIDE.md 2>/dev/null || echo "File not found"; press_any_key; docs_menu ;;
+        2) $VIEWER DEVELOPMENT_LOG.md 2>/dev/null || echo "File not found"; press_any_key; docs_menu ;;
+        3) $VIEWER COMMANDS.md 2>/dev/null || echo "File not found"; press_any_key; docs_menu ;;
+        4) $VIEWER PROJECT_STATUS.md 2>/dev/null || echo "File not found"; press_any_key; docs_menu ;;
+        5) $VIEWER TIER_ARCHITECTURE.md 2>/dev/null || echo "File not found"; press_any_key; docs_menu ;;
+        6) $VIEWER AUTH_SETUP.md 2>/dev/null || echo "File not found"; press_any_key; docs_menu ;;
+        7) $VIEWER HEALTH_MONITOR_SETUP.md 2>/dev/null || echo "File not found"; press_any_key; docs_menu ;;
+        8) $VIEWER FIREWALL_SETUP.md 2>/dev/null || echo "File not found"; press_any_key; docs_menu ;;
+        9) $VIEWER PSO_MENU_GUIDE.md 2>/dev/null || echo "File not found"; press_any_key; docs_menu ;;
+        0) show_main_menu ;;
+        *) 
+            echo -e "${RED}Invalid option${NC}"
+            sleep 1
+            docs_menu
+            ;;
+    esac
+}
+
+system_info() {
+    clear
+    show_header
+    echo -e "${YELLOW}System Information:${NC}"
+    echo ""
+    
+    # Docker status
+    echo -e "${CYAN}Docker:${NC}"
+    docker --version 2>/dev/null || echo "Not installed"
+    echo ""
+    
+    # Database status
+    echo -e "${CYAN}Database:${NC}"
+    if [ -f "/var/pso/pso.db" ]; then
+        echo -e "  ${GREEN}${CHECK}${NC} Database exists at /var/pso/pso.db"
+        db_size=$(du -h /var/pso/pso.db | cut -f1)
+        echo -e "  Size: $db_size"
+    else
+        echo -e "  ${YELLOW}${WARN}${NC} Database not found"
+    fi
+    echo ""
+    
+    # Services count
+    echo -e "${CYAN}Services:${NC}"
+    installed_count=$(./pso list 2>/dev/null | grep -c "Status:" || echo "0")
+    echo -e "  Installed: $installed_count"
+    echo ""
+    
+    # Web Dashboard
+    echo -e "${CYAN}Web Dashboard:${NC}"
+    if pgrep -f "web/api.py" > /dev/null; then
+        echo -e "  ${GREEN}${CHECK}${NC} Running at http://localhost:5000"
+    else
+        echo -e "  ${YELLOW}${WARN}${NC} Not running"
+        echo -e "  Start with: ${CYAN}cd web && python api.py${NC}"
+    fi
+    echo ""
+    
+    # Health Monitor
+    echo -e "${CYAN}Health Monitor:${NC}"
+    if pgrep -f "health_monitor.py" > /dev/null; then
+        echo -e "  ${GREEN}${CHECK}${NC} Running"
+    else
+        echo -e "  ${YELLOW}${WARN}${NC} Not running (starts with API)"
+    fi
+    echo ""
+    
+    # iptables
+    echo -e "${CYAN}Firewall (iptables):${NC}"
+    if command -v iptables &> /dev/null; then
+        echo -e "  ${GREEN}${CHECK}${NC} Installed"
+        pso_rules=$(sudo iptables -L 2>/dev/null | grep -c "PSO_" || echo "0")
+        echo -e "  Active PSO rules: $pso_rules"
+    else
+        echo -e "  ${RED}${CROSS}${NC} Not installed"
+    fi
+    echo ""
+    
+    press_any_key
+    show_main_menu
+}
+
+press_any_key() {
+    echo ""
+    read -p "Press any key to continue..."
+}
+
+# Main entry point
+show_main_menu

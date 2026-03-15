@@ -1,0 +1,104 @@
+{
+  "id": "immich",
+  "name": "Immich",
+  "version": "1.118.2",
+  "category": "media",
+  "description": "High-performance self-hosted photo and video management solution",
+  "author": "PSO Community",
+  "homepage": "https://immich.app",
+  "documentation": "https://immich.app/docs/overview/introduction",
+  "installation": {
+    "method": "docker",
+    "image": "ghcr.io/immich-app/immich-server:v1.118.2",
+    "container_port": 2283
+  },
+  "dependencies": {
+    "services": [],
+    "system": [
+      "docker"
+    ],
+    "conflicts": []
+  },
+  "ports": {
+    "http": 8202
+  },
+  "volumes": [
+    {
+      "host": "/var/pso/immich/upload",
+      "container": "/usr/src/app/upload",
+      "type": "bind",
+      "readonly": false
+    },
+    {
+      "host": "/etc/localtime",
+      "container": "/etc/localtime",
+      "type": "bind",
+      "readonly": true
+    }
+  ],
+  "environment": {
+    "DB_HOSTNAME": "immich_postgres",
+    "DB_USERNAME": "postgres",
+    "DB_PASSWORD": "postgres",
+    "DB_DATABASE_NAME": "immich",
+    "REDIS_HOSTNAME": "immich_redis",
+    "TZ": "UTC"
+  },
+  "configuration": {
+    "user_inputs": []
+  },
+  "health_check": {
+    "type": "command",
+    "command": "wget -qO/dev/null http://localhost:2283/api/server-info/ping || exit 1",
+    "interval": 30,
+    "timeout": 10,
+    "retries": 5,
+    "start_period": 60
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": null,
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": null
+  },
+  "reverse_proxy": {
+    "enabled": true,
+    "subdomain": "photos",
+    "port": 8202,
+    "path": "/",
+    "ssl": true
+  },
+  "resources": {
+    "cpu_limit": "2.0",
+    "memory_limit": "2G"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "/var/pso/immich/upload"
+    ],
+    "schedule": "0 2 * * *",
+    "retention": 30
+  },
+  "metadata": {
+    "tags": [
+      "photos",
+      "videos",
+      "gallery",
+      "backup",
+      "mobile-app"
+    ],
+    "icon": "https://immich.app/img/immich-logo.svg",
+    "license": "AGPL-3.0",
+    "notes": [
+      "Requires PostgreSQL and Redis (managed internally)",
+      "Mobile apps available for iOS and Android"
+    ],
+    "github_repo": "https://github.com/immich-app/immich"
+  },
+  "container_port": 2283
+}

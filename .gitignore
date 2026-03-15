@@ -1,0 +1,92 @@
+# PSO - Personal Server OS .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PSO specific
+*.db
+*.db-journal
+.pso/
+.pso_dev/
+.pso_check_tmp/
+pso-check-report.txt
+github_readiness_report.txt
+security_report.txt
+*_report.txt
+*.backup
+*.old
+
+# Secrets & Keys
+.secrets_key
+*.pem
+*.key
+.env
+.env.local
+*.env
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+dashboard.log
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Service data (should be backed up separately)
+data/
+backups/
+
+# Compressed files (if auto-generated)
+*.zip
+*.tar.gz
+*.tgz
+
+# Claude Code specific
+.claude/
+what i had originally/

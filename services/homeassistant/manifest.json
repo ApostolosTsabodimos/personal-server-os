@@ -1,0 +1,96 @@
+{
+  "id": "homeassistant",
+  "name": "Home Assistant",
+  "version": "2024.1.0",
+  "category": "automation",
+  "description": "Open source home automation platform focused on privacy and local control",
+  "author": "PSO Community",
+  "homepage": "https://www.home-assistant.io",
+  "documentation": "https://www.home-assistant.io/docs/",
+  "installation": {
+    "method": "docker",
+    "image": "ghcr.io/home-assistant/home-assistant:2024.1"
+  },
+  "dependencies": {
+    "services": [],
+    "system": [
+      "docker"
+    ],
+    "conflicts": []
+  },
+  "ports": {
+    "http": 8123
+  },
+  "volumes": [
+    {
+      "host": "/var/pso/homeassistant/config",
+      "container": "/config",
+      "type": "bind",
+      "readonly": false
+    },
+    {
+      "host": "/etc/localtime",
+      "container": "/etc/localtime",
+      "type": "bind",
+      "readonly": true
+    }
+  ],
+  "environment": {
+    "TZ": "UTC"
+  },
+  "configuration": {
+    "user_inputs": []
+  },
+  "health_check": {
+    "type": "command",
+    "command": "curl -sf http://localhost:8123 || exit 1",
+    "interval": 30,
+    "timeout": 10,
+    "retries": 5,
+    "start_period": 60
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": null,
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": null
+  },
+  "reverse_proxy": {
+    "enabled": true,
+    "subdomain": "home",
+    "port": 8123,
+    "path": "/",
+    "ssl": true
+  },
+  "resources": {
+    "cpu_limit": "2.0",
+    "memory_limit": "1G"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "/var/pso/homeassistant/config"
+    ],
+    "schedule": "0 3 * * *",
+    "retention": 14
+  },
+  "metadata": {
+    "tags": [
+      "home-automation",
+      "iot",
+      "smart-home",
+      "automation",
+      "privacy"
+    ],
+    "icon": "https://www.home-assistant.io/images/home-assistant-logo.svg",
+    "license": "Apache-2.0",
+    "screenshots": [],
+    "github_repo": "https://github.com/home-assistant/core",
+    "website": "https://www.home-assistant.io"
+  },
+  "container_port": 8123
+}

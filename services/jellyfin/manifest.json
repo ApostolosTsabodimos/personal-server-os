@@ -1,0 +1,109 @@
+{
+  "id": "jellyfin",
+  "name": "Jellyfin",
+  "version": "10.8.13",
+  "category": "media",
+  "description": "Free and open-source media server for managing and streaming your media library",
+  "author": "PSO Community",
+  "homepage": "https://jellyfin.org",
+  "documentation": "https://jellyfin.org/docs/",
+  "installation": {
+    "method": "docker",
+    "image": "jellyfin/jellyfin:10.8.13",
+    "container_port": 8096,
+    "port_mappings": {
+      "http": 8096,
+      "https": 8920
+    }
+  },
+  "dependencies": {
+    "services": [],
+    "system": [
+      "docker"
+    ],
+    "conflicts": [
+      "plex",
+      "emby"
+    ]
+  },
+  "ports": {
+    "http": 8200,
+    "https": 8201
+  },
+  "volumes": [
+    {
+      "host": "/var/pso/jellyfin/config",
+      "container": "/config",
+      "type": "bind",
+      "readonly": false
+    },
+    {
+      "host": "/var/pso/jellyfin/cache",
+      "container": "/cache",
+      "type": "bind",
+      "readonly": false
+    },
+    {
+      "host": "/media",
+      "container": "/media",
+      "type": "bind",
+      "readonly": true
+    }
+  ],
+  "environment": {
+    "TZ": "UTC"
+  },
+  "configuration": {
+    "user_inputs": []
+  },
+  "health_check": {
+    "type": "command",
+    "command": "curl -sf http://localhost:8096/health || exit 1",
+    "interval": 30,
+    "timeout": 10,
+    "retries": 5,
+    "start_period": 60
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": "echo 'Mount your media directories to /media on the host'",
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": null
+  },
+  "reverse_proxy": {
+    "enabled": true,
+    "subdomain": "jellyfin",
+    "port": 8200,
+    "path": "/",
+    "ssl": true
+  },
+  "resources": {
+    "cpu_limit": "4.0",
+    "memory_limit": "2G"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "/var/pso/jellyfin/config"
+    ],
+    "schedule": "0 3 * * *",
+    "retention": 14
+  },
+  "metadata": {
+    "tags": [
+      "media-server",
+      "streaming",
+      "movies",
+      "tv-shows",
+      "music"
+    ],
+    "icon": "https://jellyfin.org/images/logo.svg",
+    "license": "GPL-2.0",
+    "github_repo": "https://github.com/jellyfin/jellyfin",
+    "website": "https://jellyfin.org"
+  }
+}

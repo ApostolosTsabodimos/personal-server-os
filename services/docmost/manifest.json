@@ -1,0 +1,91 @@
+{
+  "id": "docmost",
+  "name": "Docmost",
+  "version": "1.0.0",
+  "category": "productivity",
+  "description": "Open-source collaborative documentation platform with real-time editing",
+  "author": "PSO Community",
+  "homepage": "https://docmost.com",
+  "documentation": "https://docs.docmost.com",
+  "installation": {
+    "method": "docker",
+    "image": "docmost/docmost:latest",
+    "container_port": 3000
+  },
+  "dependencies": {
+    "services": [],
+    "system": [
+      "docker"
+    ],
+    "conflicts": []
+  },
+  "ports": {
+    "http": 8100
+  },
+  "volumes": [
+    {
+      "host": "/var/pso/docmost/data",
+      "container": "/app/data",
+      "type": "bind",
+      "readonly": false
+    }
+  ],
+  "environment": {
+    "APP_URL": "http://localhost:8100",
+    "DATABASE_URL": "sqlite:///app/data/docmost.db",
+    "APP_SECRET": "__generate:hex_32__"
+  },
+  "configuration": {
+    "user_inputs": []
+  },
+  "health_check": {
+    "type": "command",
+    "command": "wget -qO/dev/null http://localhost:3000 || exit 1",
+    "interval": 30,
+    "timeout": 10,
+    "retries": 5,
+    "start_period": 30
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": null,
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": null
+  },
+  "reverse_proxy": {
+    "enabled": true,
+    "subdomain": "docs",
+    "port": 8100,
+    "path": "/",
+    "ssl": true
+  },
+  "resources": {
+    "cpu_limit": "1.0",
+    "memory_limit": "1G"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "/var/pso/docmost/data"
+    ],
+    "schedule": "0 2 * * *",
+    "retention": 30
+  },
+  "metadata": {
+    "tags": [
+      "documentation",
+      "wiki",
+      "collaboration",
+      "markdown",
+      "real-time"
+    ],
+    "icon": "https://docmost.com/icon.png",
+    "license": "AGPL-3.0",
+    "github_repo": "https://github.com/docmost/docmost"
+  },
+  "container_port": 3000
+}

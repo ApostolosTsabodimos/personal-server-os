@@ -1,0 +1,92 @@
+{
+  "id": "filebrowser",
+  "name": "File Browser",
+  "version": "2.30.0",
+  "category": "storage",
+  "description": "Web-based file manager with drag-and-drop upload and multiple user support",
+  "author": "PSO Community",
+  "homepage": "https://filebrowser.org",
+  "documentation": "https://filebrowser.org/configuration",
+  "installation": {
+    "method": "docker",
+    "image": "filebrowser/filebrowser:v2.30.0",
+    "container_port": 80
+  },
+  "dependencies": {
+    "services": [],
+    "system": [
+      "docker"
+    ],
+    "conflicts": []
+  },
+  "ports": {
+    "http": 8101
+  },
+  "volumes": [
+    {
+      "host": "/var/pso/filebrowser/data",
+      "container": "/srv",
+      "type": "bind",
+      "readonly": false
+    },
+    {
+      "host": "/var/pso/filebrowser/database",
+      "container": "/database",
+      "type": "bind",
+      "readonly": false
+    }
+  ],
+  "environment": {},
+  "configuration": {
+    "user_inputs": []
+  },
+  "health_check": {
+    "type": "command",
+    "command": "wget -qO/dev/null http://localhost:80 || exit 1",
+    "interval": 30,
+    "timeout": 10,
+    "retries": 3,
+    "start_period": 15
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": null,
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": null
+  },
+  "reverse_proxy": {
+    "enabled": true,
+    "subdomain": "files",
+    "port": 8101,
+    "path": "/",
+    "ssl": true
+  },
+  "resources": {
+    "cpu_limit": "0.5",
+    "memory_limit": "256M"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "/var/pso/filebrowser/database"
+    ],
+    "schedule": "0 3 * * *",
+    "retention": 14
+  },
+  "metadata": {
+    "tags": [
+      "file-manager",
+      "storage",
+      "upload",
+      "web-ui"
+    ],
+    "icon": "https://filebrowser.org/img/logo.svg",
+    "license": "Apache-2.0",
+    "github_repo": "https://github.com/filebrowser/filebrowser"
+  },
+  "container_port": 80
+}

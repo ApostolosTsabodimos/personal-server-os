@@ -1,0 +1,92 @@
+{
+  "id": "airvpn",
+  "name": "AirVPN",
+  "version": "1.0.0",
+  "category": "networking",
+  "description": "OpenVPN client for AirVPN with DNS leak protection and kill switch",
+  "author": "PSO Community",
+  "homepage": "https://airvpn.org",
+  "documentation": "https://airvpn.org/forums/",
+  "installation": {
+    "method": "docker",
+    "image": "dperson/openvpn-client:latest"
+  },
+  "dependencies": {
+    "services": [],
+    "system": [
+      "docker"
+    ],
+    "conflicts": []
+  },
+  "ports": {},
+  "volumes": [
+    {
+      "host": "/var/pso/airvpn/config",
+      "container": "/vpn",
+      "type": "bind",
+      "readonly": false
+    }
+  ],
+  "environment": {
+    "TZ": "UTC",
+    "FIREWALL": "true",
+    "ROUTE": "192.168.0.0/16",
+    "DNS": "10.4.0.1"
+  },
+  "configuration": {
+    "user_inputs": []
+  },
+  "health_check": {
+    "type": "command",
+    "command": "ping -c 1 -W 5 8.8.8.8",
+    "interval": 60,
+    "timeout": 10,
+    "retries": 3,
+    "start_period": 30
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": "echo 'Place your AirVPN .ovpn config file in /var/pso/airvpn/config/'",
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": null
+  },
+  "reverse_proxy": {
+    "enabled": false
+  },
+  "resources": {
+    "cpu_limit": "0.5",
+    "memory_limit": "256M"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "/var/pso/airvpn/config"
+    ],
+    "schedule": "0 4 * * *",
+    "retention": 7
+  },
+  "metadata": {
+    "tags": [
+      "vpn",
+      "privacy",
+      "security",
+      "network",
+      "airvpn",
+      "openvpn"
+    ],
+    "icon": "https://airvpn.org/theme/images/logo.svg",
+    "license": "GPL-2.0",
+    "screenshots": [],
+    "notes": [
+      "Requires privileged mode for network configuration",
+      "You must provide your own AirVPN .ovpn configuration file",
+      "Place config file in /var/pso/airvpn/config/ after installation",
+      "Container needs NET_ADMIN capability"
+    ],
+    "github_repo": "https://github.com/dperson/openvpn-client"
+  }
+}

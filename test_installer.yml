@@ -1,0 +1,62 @@
+name: Test Installer
+
+on:
+  push:
+    paths:
+      - install.sh
+      - .github/workflows/test-installer.yml
+  pull_request:
+    paths:
+      - install.sh
+  workflow_dispatch:  # lets you trigger it manually from the GitHub UI
+
+jobs:
+  test:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu 22.04
+            image: ubuntu:22.04
+            setup: apt-get update -qq && apt-get install -y -qq sudo curl git
+          - name: Debian 12
+            image: debian:12
+            setup: apt-get update -qq && apt-get install -y -qq sudo curl git
+          - name: Arch Linux
+            image: archlinux:latest
+            setup: pacman -Sy --noconfirm sudo git curl
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run install.sh in ${{ matrix.name }} container
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/install.sh:/install.sh:ro" \
+            "${{ matrix.image }}" \
+            bash -c "
+              ${{ matrix.setup }}
+
+              # Create non-root user with passwordless sudo
+              useradd -m -s /bin/bash tester
+              echo 'tester ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+              # Inject a minimal fake PSO repo so we don't need network
+              mkdir -p /fake-pso-repo && cd /fake-pso-repo && git init
+              touch requirements.txt
+              printf '#!/usr/bin/env bash\necho pso-check: all phases passing\nexit 0\n' > pso-check
+              printf '#!/usr/bin/env bash\necho pso CLI\n' > pso
+              chmod +x pso-check pso
+              git config user.email ci@test.com && git config user.name CI
+              git add -A && git commit -m init
+
+              # Patch install.sh: point at fake repo, stub Docker check
+              cp /install.sh /install-test.sh
+              sed -i 's|PSO_REPO=.*|PSO_REPO=\"file:///fake-pso-repo\"|' /install-test.sh
+              sed -i 's|ensure_docker\$|: # stubbed|' /install-test.sh
+              chmod +x /install-test.sh
+
+              su tester -c 'bash /install-test.sh'
+            "

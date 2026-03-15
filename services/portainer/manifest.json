@@ -1,0 +1,104 @@
+{
+  "id": "portainer",
+  "name": "Portainer",
+  "version": "2.19.4",
+  "category": "infrastructure",
+  "description": "Lightweight container management UI for Docker, Docker Swarm, and Kubernetes",
+  "author": "PSO Community",
+  "homepage": "https://www.portainer.io",
+  "documentation": "https://docs.portainer.io",
+  "installation": {
+    "method": "docker",
+    "image": "portainer/portainer-ce:2.19.4-alpine",
+    "port_mappings": {
+      "http": 9000,
+      "edge": 8000
+    }
+  },
+  "dependencies": {
+    "services": [],
+    "system": [
+      "docker"
+    ],
+    "conflicts": []
+  },
+  "ports": {
+    "http": 9000,
+    "edge": 8000
+  },
+  "volumes": [
+    {
+      "host": "/var/run/docker.sock",
+      "container": "/var/run/docker.sock",
+      "type": "bind",
+      "readonly": false
+    },
+    {
+      "host": "/var/pso/portainer/data",
+      "container": "/data",
+      "type": "bind",
+      "readonly": false
+    }
+  ],
+  "environment": {},
+  "configuration": {
+    "user_inputs": [
+      {
+        "name": "admin_password",
+        "prompt": "Set admin password (min 12 characters)",
+        "required": true,
+        "type": "string",
+        "validation": "^.{12,}$"
+      }
+    ]
+  },
+  "health_check": {
+    "type": "command",
+    "command": "wget -qO/dev/null http://localhost:9000/api/status || exit 1",
+    "interval": 30,
+    "timeout": 5,
+    "retries": 3,
+    "start_period": 15
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": "scripts/initialize_admin.sh",
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": null
+  },
+  "reverse_proxy": {
+    "enabled": true,
+    "subdomain": "portainer",
+    "port": 9000,
+    "path": "/",
+    "ssl": true
+  },
+  "resources": {
+    "cpu_limit": "0.5",
+    "memory_limit": "512M"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "/var/pso/portainer/data"
+    ],
+    "schedule": "0 3 * * *",
+    "retention": 14
+  },
+  "metadata": {
+    "tags": [
+      "docker",
+      "container-management",
+      "ui",
+      "orchestration"
+    ],
+    "icon": "https://www.portainer.io/hubfs/portainer-logo-black.svg",
+    "license": "Zlib",
+    "github_repo": "https://github.com/portainer/portainer",
+    "website": "https://www.portainer.io"
+  }
+}

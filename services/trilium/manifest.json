@@ -1,0 +1,87 @@
+{
+  "id": "trilium",
+  "name": "Trilium Notes",
+  "version": "0.63.7",
+  "category": "productivity",
+  "description": "Hierarchical note-taking application with focus on building personal knowledge base",
+  "author": "PSO Community",
+  "homepage": "https://github.com/zadam/trilium",
+  "documentation": "https://github.com/zadam/trilium/wiki",
+  "installation": {
+    "method": "docker",
+    "image": "zadam/trilium:0.63.7",
+    "container_port": 8080
+  },
+  "dependencies": {
+    "services": [],
+    "system": [
+      "docker"
+    ],
+    "conflicts": []
+  },
+  "ports": {
+    "http": 8102
+  },
+  "volumes": [
+    {
+      "host": "/var/pso/trilium/data",
+      "container": "/home/node/trilium-data",
+      "type": "bind",
+      "readonly": false
+    }
+  ],
+  "environment": {},
+  "configuration": {
+    "user_inputs": []
+  },
+  "health_check": {
+    "type": "command",
+    "command": "wget -qO/dev/null http://localhost:8080 || exit 1",
+    "interval": 30,
+    "timeout": 10,
+    "retries": 5,
+    "start_period": 30
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": null,
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": null
+  },
+  "reverse_proxy": {
+    "enabled": true,
+    "subdomain": "notes",
+    "port": 8102,
+    "path": "/",
+    "ssl": true
+  },
+  "resources": {
+    "cpu_limit": "1.0",
+    "memory_limit": "512M"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "/var/pso/trilium/data"
+    ],
+    "schedule": "0 2 * * *",
+    "retention": 30
+  },
+  "metadata": {
+    "tags": [
+      "notes",
+      "knowledge-base",
+      "wiki",
+      "markdown",
+      "organization"
+    ],
+    "icon": "https://raw.githubusercontent.com/zadam/trilium/master/images/app-icons/png/256x256.png",
+    "license": "AGPL-3.0",
+    "github_repo": "https://github.com/zadam/trilium"
+  },
+  "container_port": 8080
+}

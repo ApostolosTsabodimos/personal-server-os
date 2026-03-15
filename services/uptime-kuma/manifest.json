@@ -1,0 +1,87 @@
+{
+  "id": "uptime-kuma",
+  "name": "Uptime Kuma",
+  "version": "1.23.15",
+  "category": "monitoring",
+  "description": "Self-hosted monitoring tool like 'Uptime Robot' with a fancy UI",
+  "author": "PSO Community",
+  "homepage": "https://github.com/louislam/uptime-kuma",
+  "documentation": "https://github.com/louislam/uptime-kuma/wiki",
+  "installation": {
+    "method": "docker",
+    "image": "louislam/uptime-kuma:1.23.15",
+    "container_port": 3001
+  },
+  "dependencies": {
+    "services": [],
+    "system": [
+      "docker"
+    ],
+    "conflicts": []
+  },
+  "ports": {
+    "http": 8302
+  },
+  "volumes": [
+    {
+      "host": "/var/pso/uptime-kuma/data",
+      "container": "/app/data",
+      "type": "bind",
+      "readonly": false
+    }
+  ],
+  "environment": {},
+  "configuration": {
+    "user_inputs": []
+  },
+  "health_check": {
+    "type": "command",
+    "command": "wget -qO/dev/null http://localhost:3001 || exit 1",
+    "interval": 30,
+    "timeout": 10,
+    "retries": 3,
+    "start_period": 20
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": null,
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": null
+  },
+  "reverse_proxy": {
+    "enabled": true,
+    "subdomain": "uptime",
+    "port": 8302,
+    "path": "/",
+    "ssl": true
+  },
+  "resources": {
+    "cpu_limit": "0.5",
+    "memory_limit": "512M"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "/var/pso/uptime-kuma/data"
+    ],
+    "schedule": "0 4 * * *",
+    "retention": 14
+  },
+  "metadata": {
+    "tags": [
+      "monitoring",
+      "uptime",
+      "status-page",
+      "alerts",
+      "notifications"
+    ],
+    "icon": "https://uptime.kuma.pet/img/icon.svg",
+    "license": "MIT",
+    "github_repo": "https://github.com/louislam/uptime-kuma"
+  },
+  "container_port": 3001
+}

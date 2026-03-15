@@ -1,0 +1,99 @@
+{
+  "id": "mosquitto",
+  "name": "Mosquitto MQTT Broker",
+  "version": "2.0.18",
+  "category": "infrastructure",
+  "description": "Open-source MQTT message broker for IoT and home automation",
+  "author": "PSO Community",
+  "homepage": "https://mosquitto.org",
+  "documentation": "https://mosquitto.org/documentation/",
+  "installation": {
+    "method": "docker",
+    "image": "eclipse-mosquitto:2.0.18",
+    "port_mappings": {
+      "mqtt": 1883,
+      "websocket": 9001
+    }
+  },
+  "dependencies": {
+    "services": [],
+    "system": [
+      "docker"
+    ],
+    "conflicts": []
+  },
+  "ports": {
+    "mqtt": 1883,
+    "websocket": 9001
+  },
+  "volumes": [
+    {
+      "host": "/var/pso/mosquitto/config",
+      "container": "/mosquitto/config",
+      "type": "bind",
+      "readonly": false
+    },
+    {
+      "host": "/var/pso/mosquitto/data",
+      "container": "/mosquitto/data",
+      "type": "bind",
+      "readonly": false
+    },
+    {
+      "host": "/var/pso/mosquitto/log",
+      "container": "/mosquitto/log",
+      "type": "bind",
+      "readonly": false
+    }
+  ],
+  "environment": {},
+  "configuration": {
+    "user_inputs": []
+  },
+  "health_check": {
+    "type": "command",
+    "command": "mosquitto_sub -t '\\$SYS/#' -C 1 -W 3",
+    "interval": 30,
+    "timeout": 5,
+    "retries": 3,
+    "start_period": 10
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": null,
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": null
+  },
+  "reverse_proxy": {
+    "enabled": false
+  },
+  "resources": {
+    "cpu_limit": "0.5",
+    "memory_limit": "128M"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "/var/pso/mosquitto/config",
+      "/var/pso/mosquitto/data"
+    ],
+    "schedule": "0 3 * * *",
+    "retention": 14
+  },
+  "metadata": {
+    "tags": [
+      "mqtt",
+      "broker",
+      "iot",
+      "messaging",
+      "home-automation"
+    ],
+    "icon": "https://mosquitto.org/images/mosquitto-text-side-28.png",
+    "license": "EPL-2.0",
+    "github_repo": "https://github.com/eclipse/mosquitto"
+  }
+}

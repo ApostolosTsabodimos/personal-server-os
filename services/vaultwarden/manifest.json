@@ -1,0 +1,97 @@
+{
+  "id": "vaultwarden",
+  "name": "Vaultwarden",
+  "version": "1.30.5",
+  "category": "security",
+  "description": "Unofficial Bitwarden-compatible password manager server written in Rust",
+  "author": "PSO Community",
+  "homepage": "https://github.com/dani-garcia/vaultwarden",
+  "documentation": "https://github.com/dani-garcia/vaultwarden/wiki",
+  "installation": {
+    "method": "docker",
+    "image": "vaultwarden/server:1.30.5",
+    "container_port": 80
+  },
+  "dependencies": {
+    "services": [],
+    "system": [
+      "docker"
+    ],
+    "conflicts": []
+  },
+  "ports": {
+    "http": 8103
+  },
+  "volumes": [
+    {
+      "host": "/var/pso/vaultwarden/data",
+      "container": "/data",
+      "type": "bind",
+      "readonly": false
+    }
+  ],
+  "environment": {
+    "WEBSOCKET_ENABLED": "true",
+    "SIGNUPS_ALLOWED": "true",
+    "ADMIN_TOKEN": "__generate:hex_48__",
+    "DOMAIN": "http://localhost:8103"
+  },
+  "configuration": {
+    "user_inputs": []
+  },
+  "health_check": {
+    "type": "command",
+    "command": "wget -qO/dev/null http://localhost:80/alive || exit 1",
+    "interval": 30,
+    "timeout": 10,
+    "retries": 5,
+    "start_period": 20
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": "echo 'IMPORTANT: Set ADMIN_TOKEN in environment for admin panel access'",
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": null
+  },
+  "reverse_proxy": {
+    "enabled": true,
+    "subdomain": "vault",
+    "port": 8103,
+    "path": "/",
+    "ssl": true
+  },
+  "resources": {
+    "cpu_limit": "0.5",
+    "memory_limit": "256M"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "/var/pso/vaultwarden/data"
+    ],
+    "schedule": "0 1 * * *",
+    "retention": 60
+  },
+  "metadata": {
+    "tags": [
+      "password-manager",
+      "security",
+      "bitwarden",
+      "vault",
+      "credentials"
+    ],
+    "icon": "https://raw.githubusercontent.com/dani-garcia/vaultwarden/main/resources/vaultwarden-icon.svg",
+    "license": "GPL-3.0",
+    "notes": [
+      "Compatible with official Bitwarden clients",
+      "Set ADMIN_TOKEN environment variable for admin panel",
+      "Signups enabled by default - disable in production"
+    ],
+    "github_repo": "https://github.com/dani-garcia/vaultwarden"
+  },
+  "container_port": 80
+}

@@ -1,0 +1,87 @@
+{
+  "id": "homer",
+  "name": "Homer Dashboard",
+  "version": "24.11.1",
+  "category": "productivity",
+  "description": "A simple, static homepage for your server with service shortcuts and status indicators",
+  "author": "PSO Community",
+  "homepage": "https://github.com/bastienwirtz/homer",
+  "documentation": "https://github.com/bastienwirtz/homer/blob/main/docs/configuration.md",
+  "installation": {
+    "method": "docker",
+    "image": "b4bz/homer:latest",
+    "container_port": 8080
+  },
+  "dependencies": {
+    "services": [],
+    "system": [
+      "docker"
+    ],
+    "conflicts": []
+  },
+  "ports": {
+    "http": 8081
+  },
+  "volumes": [
+    {
+      "host": "/var/pso/homer/config",
+      "container": "/www/assets",
+      "type": "bind",
+      "readonly": false
+    }
+  ],
+  "environment": {
+    "INIT_ASSETS": "1"
+  },
+  "configuration": {
+    "user_inputs": []
+  },
+  "health_check": {
+    "type": "command",
+    "command": "wget -qO/dev/null http://localhost:8080 || exit 1",
+    "interval": 30,
+    "timeout": 5,
+    "retries": 3,
+    "start_period": 10
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": "echo 'Edit /var/pso/homer/config/config.yml to customise your dashboard'",
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": null
+  },
+  "reverse_proxy": {
+    "enabled": true,
+    "subdomain": "homer",
+    "port": 8081,
+    "path": "/",
+    "ssl": true
+  },
+  "resources": {
+    "cpu_limit": "0.25",
+    "memory_limit": "64M"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "/var/pso/homer/config"
+    ],
+    "schedule": "0 4 * * *",
+    "retention": 14
+  },
+  "metadata": {
+    "tags": [
+      "dashboard",
+      "homepage",
+      "ui",
+      "shortcuts"
+    ],
+    "license": "Apache-2.0",
+    "github_repo": "https://github.com/bastienwirtz/homer"
+  },
+  "container_port": 8080
+}

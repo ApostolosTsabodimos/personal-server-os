@@ -1,0 +1,100 @@
+{
+  "id": "firefly-iii",
+  "name": "Firefly III",
+  "version": "6.1.21",
+  "category": "productivity",
+  "description": "A free and open source personal finance manager",
+  "author": "PSO Community",
+  "homepage": "https://www.firefly-iii.org",
+  "documentation": "https://docs.firefly-iii.org",
+  "installation": {
+    "method": "docker",
+    "image": "fireflyiii/core:version-6.1.21",
+    "container_port": 8080
+  },
+  "dependencies": {
+    "services": [],
+    "system": [
+      "docker"
+    ],
+    "conflicts": []
+  },
+  "ports": {
+    "http": 8082
+  },
+  "volumes": [
+    {
+      "host": "~/.pso_dev/services/firefly-iii/upload",
+      "container": "/var/www/html/storage/upload",
+      "type": "bind",
+      "readonly": false
+    }
+  ],
+  "environment": {
+    "APP_ENV": "production",
+    "APP_KEY": "__generate:base64_32__",
+    "APP_URL": "http://localhost:8082",
+    "DB_CONNECTION": "sqlite",
+    "DEFAULT_LANGUAGE": "en_US",
+    "DEFAULT_LOCALE": "equal",
+    "TZ": "UTC",
+    "TRUSTED_PROXIES": "**",
+    "LOG_CHANNEL": "stack"
+  },
+  "configuration": {
+    "user_inputs": []
+  },
+  "health_check": {
+    "type": "http",
+    "endpoint": "http://localhost:8082/health",
+    "interval": 30,
+    "timeout": 10,
+    "retries": 10,
+    "start_period": 60
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": null,
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": null
+  },
+  "reverse_proxy": {
+    "enabled": true,
+    "subdomain": "firefly",
+    "port": 8082,
+    "path": "/",
+    "ssl": true
+  },
+  "resources": {
+    "cpu_limit": "1.0",
+    "memory_limit": "512M"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "~/.pso_dev/services/firefly-iii/upload"
+    ],
+    "schedule": "0 2 * * *",
+    "retention": 30
+  },
+  "metadata": {
+    "tags": [
+      "finance",
+      "budgeting",
+      "personal-finance",
+      "money-management"
+    ],
+    "icon": "https://www.firefly-iii.org/assets/logo/color.png",
+    "license": "AGPL-3.0",
+    "screenshots": [
+      "https://www.firefly-iii.org/static/screenshots/4.7.0/1-accounts.png"
+    ],
+    "github_repo": "https://github.com/firefly-iii/firefly-iii",
+    "website": "https://www.firefly-iii.org"
+  },
+  "container_port": 8080
+}

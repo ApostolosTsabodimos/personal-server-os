@@ -1,0 +1,436 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://pso.local/schemas/manifest_v1.schema.json",
+  "title": "PSO Service Manifest",
+  "description": "Schema for PSO service manifest files",
+  "type": "object",
+  "required": ["id", "name", "version", "category", "description", "installation"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Unique service identifier (lowercase, alphanumeric, hyphens only)",
+      "examples": ["nginx", "portainer", "home-assistant"]
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable service name",
+      "examples": ["Nginx Web Server", "Portainer"]
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version of the service",
+      "examples": ["1.25.0", "2.19.4"]
+    },
+    "category": {
+      "type": "string",
+      "enum": ["infrastructure", "productivity", "media", "security", "monitoring", "networking", "storage", "automation", "other"],
+      "description": "Service category for organization"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 500,
+      "description": "Brief description of what the service does"
+    },
+    "author": {
+      "type": "string",
+      "description": "Manifest author or maintainer"
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri",
+      "description": "Project homepage URL"
+    },
+    "documentation": {
+      "type": "string",
+      "format": "uri",
+      "description": "Documentation URL"
+    },
+    "installation": {
+      "type": "object",
+      "required": ["method"],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["docker", "docker-compose", "systemd", "binary", "script"],
+          "description": "Installation method"
+        },
+        "image": {
+          "type": "string",
+          "description": "Docker image name (for docker method)",
+          "examples": ["nginx:latest", "portainer/portainer-ce:latest"]
+        },
+        "compose": {
+          "type": "object",
+          "description": "Docker Compose configuration"
+        },
+        "binary_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to download binary (for binary method)"
+        },
+        "script_path": {
+          "type": "string",
+          "description": "Path to installation script (for script method)"
+        },
+        "systemd_unit": {
+          "type": "string",
+          "description": "Systemd unit file content or path"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "method": { "const": "docker" } }
+          },
+          "then": {
+            "required": ["image"]
+          }
+        },
+        {
+          "if": {
+            "properties": { "method": { "const": "docker-compose" } }
+          },
+          "then": {
+            "required": ["compose"]
+          }
+        }
+      ]
+    },
+    "dependencies": {
+      "type": "object",
+      "properties": {
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$"
+          },
+          "description": "Other PSO services this service depends on"
+        },
+        "system": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "System packages required (docker, python3, etc.)"
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$"
+          },
+          "description": "Services that conflict with this one"
+        }
+      },
+      "default": {
+        "services": [],
+        "system": [],
+        "conflicts": []
+      }
+    },
+    "ports": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z0-9_]+$": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        }
+      },
+      "description": "Port mappings (name: port_number)"
+    },
+    "volumes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["host", "container"],
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "Host path"
+          },
+          "container": {
+            "type": "string",
+            "description": "Container path"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["bind", "volume", "tmpfs"],
+            "default": "bind"
+          },
+          "readonly": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "patternProperties": {
+        "^[A-Z_][A-Z0-9_]*$": {
+          "type": "string"
+        }
+      },
+      "description": "Environment variables (KEY: value)"
+    },
+    "configuration": {
+      "type": "object",
+      "properties": {
+        "templates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Configuration template files (Jinja2)"
+        },
+        "user_inputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "prompt"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z_][a-z0-9_]*$",
+                "description": "Variable name (snake_case)"
+              },
+              "prompt": {
+                "type": "string",
+                "description": "Question to ask the user"
+              },
+              "default": {
+                "type": ["string", "number", "boolean"],
+                "description": "Default value"
+              },
+              "required": {
+                "type": "boolean",
+                "default": false
+              },
+              "type": {
+                "type": "string",
+                "enum": ["string", "int", "float", "bool", "email", "domain", "path", "choice"],
+                "default": "string"
+              },
+              "validation": {
+                "type": "string",
+                "description": "Regex pattern for validation"
+              }
+            }
+          }
+        },
+        "config_files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source", "destination"],
+            "properties": {
+              "source": {
+                "type": "string",
+                "description": "Template source path"
+              },
+              "destination": {
+                "type": "string",
+                "description": "Destination path in container/system"
+              }
+            }
+          }
+        }
+      }
+    },
+    "health_check": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["http", "tcp", "command", "none"],
+          "description": "Type of health check"
+        },
+        "endpoint": {
+          "type": "string",
+          "description": "HTTP endpoint or TCP address to check"
+        },
+        "command": {
+          "type": "string",
+          "description": "Command to run for health check"
+        },
+        "interval": {
+          "type": "integer",
+          "minimum": 5,
+          "default": 30,
+          "description": "Seconds between health checks"
+        },
+        "timeout": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 5,
+          "description": "Timeout in seconds"
+        },
+        "retries": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 3,
+          "description": "Number of retries before marking unhealthy"
+        },
+        "start_period": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Grace period before starting health checks (seconds)"
+        }
+      }
+    },
+    "hooks": {
+      "type": "object",
+      "properties": {
+        "pre_install": {
+          "type": ["string", "null"],
+          "description": "Script to run before installation"
+        },
+        "post_install": {
+          "type": ["string", "null"],
+          "description": "Script to run after installation"
+        },
+        "pre_start": {
+          "type": ["string", "null"],
+          "description": "Script to run before starting service"
+        },
+        "post_start": {
+          "type": ["string", "null"],
+          "description": "Script to run after starting service"
+        },
+        "pre_stop": {
+          "type": ["string", "null"],
+          "description": "Script to run before stopping service"
+        },
+        "post_stop": {
+          "type": ["string", "null"],
+          "description": "Script to run after stopping service"
+        },
+        "pre_uninstall": {
+          "type": ["string", "null"],
+          "description": "Script to run before uninstallation"
+        },
+        "post_uninstall": {
+          "type": ["string", "null"],
+          "description": "Script to run after uninstallation"
+        }
+      }
+    },
+    "reverse_proxy": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable reverse proxy for this service"
+        },
+        "subdomain": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "description": "Subdomain to use (e.g., 'nginx' for nginx.yourdomain.com)"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Internal port to proxy to"
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^/.*$",
+          "default": "/",
+          "description": "URL path to proxy"
+        },
+        "ssl": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable SSL/TLS"
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "properties": {
+        "cpu_limit": {
+          "type": "string",
+          "pattern": "^[0-9]+(\\.[0-9]+)?$",
+          "description": "CPU limit (e.g., '1.5' for 1.5 cores)",
+          "examples": ["0.5", "2.0"]
+        },
+        "memory_limit": {
+          "type": "string",
+          "pattern": "^[0-9]+(\\.[0-9]+)?[KMG]$",
+          "description": "Memory limit (e.g., '512M', '2G')",
+          "examples": ["512M", "1G", "2G"]
+        },
+        "disk_limit": {
+          "type": "string",
+          "pattern": "^[0-9]+(\\.[0-9]+)?[KMGT]$",
+          "description": "Disk space limit",
+          "examples": ["10G", "100G", "1T"]
+        }
+      }
+    },
+    "backup": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable automatic backups"
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Paths to include in backups"
+        },
+        "schedule": {
+          "type": "string",
+          "pattern": "^(@(annually|yearly|monthly|weekly|daily|hourly|reboot))|(@every (\\d+(ns|us|µs|ms|s|m|h))+)|(((\\d+,)+\\d+|(\\d+([/-])\\d+)|\\d+|\\*) ?){5,7}$",
+          "description": "Cron schedule for backups",
+          "examples": ["0 2 * * *", "@daily"]
+        },
+        "retention": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 7,
+          "description": "Number of backups to retain"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Tags for searching/filtering"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon URL or path"
+        },
+        "screenshot": {
+          "type": "string",
+          "format": "uri",
+          "description": "Screenshot URL"
+        },
+        "license": {
+          "type": "string",
+          "description": "Software license"
+        }
+      }
+    }
+  }
+}

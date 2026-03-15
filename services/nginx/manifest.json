@@ -1,0 +1,131 @@
+{
+  "id": "nginx",
+  "name": "Nginx Web Server",
+  "version": "1.25.3",
+  "category": "infrastructure",
+  "description": "High-performance HTTP server and reverse proxy with load balancing capabilities",
+  "author": "PSO Community",
+  "homepage": "https://nginx.org",
+  "documentation": "https://nginx.org/en/docs/",
+  "installation": {
+    "method": "docker",
+    "image": "nginx:1.25.3-alpine",
+    "port_mappings": {
+      "http": 80,
+      "https": 443
+    }
+  },
+  "dependencies": {
+    "services": [],
+    "system": [
+      "docker"
+    ],
+    "conflicts": [
+      "apache2",
+      "caddy"
+    ]
+  },
+  "ports": {
+    "http": 80,
+    "https": 443
+  },
+  "volumes": [
+    {
+      "host": "/var/pso/nginx/html",
+      "container": "/usr/share/nginx/html",
+      "type": "bind",
+      "readonly": false
+    },
+    {
+      "host": "/var/pso/nginx/conf",
+      "container": "/etc/nginx/conf.d",
+      "type": "bind",
+      "readonly": false
+    },
+    {
+      "host": "/var/pso/nginx/logs",
+      "container": "/var/log/nginx",
+      "type": "bind",
+      "readonly": false
+    }
+  ],
+  "environment": {
+    "NGINX_HOST": "localhost",
+    "NGINX_PORT": "80"
+  },
+  "configuration": {
+    "user_inputs": [
+      {
+        "name": "server_name",
+        "prompt": "Enter your server name/domain",
+        "default": "localhost:80",
+        "required": true,
+        "type": "domain",
+        "help": "The domain or hostname where nginx will be accessible. For local use: localhost:80. For public: yourdomain.com"
+      },
+      {
+        "name": "enable_ssl",
+        "prompt": "Enable SSL/TLS encryption?",
+        "default": "no",
+        "required": false,
+        "type": "choice",
+        "options": [
+          "yes",
+          "no"
+        ],
+        "help": "SSL/TLS encrypts traffic between your browser and server (HTTPS). Choose 'yes' for secure connections with certificates, 'no' for local testing only."
+      }
+    ],
+    "templates": [
+      "nginx.conf.j2",
+      "default.conf.j2"
+    ]
+  },
+  "health_check": {
+    "type": "command",
+    "command": "wget -qO/dev/null http://localhost:80 || exit 1",
+    "interval": 30,
+    "timeout": 5,
+    "retries": 3,
+    "start_period": 15
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": "scripts/setup_directories.sh",
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": "scripts/cleanup.sh"
+  },
+  "reverse_proxy": {
+    "enabled": false
+  },
+  "resources": {
+    "cpu_limit": "0.5",
+    "memory_limit": "256M"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "/var/pso/nginx/conf",
+      "/var/pso/nginx/html"
+    ],
+    "schedule": "0 2 * * *",
+    "retention": 7
+  },
+  "metadata": {
+    "tags": [
+      "web-server",
+      "reverse-proxy",
+      "http",
+      "https",
+      "infrastructure"
+    ],
+    "icon": "https://nginx.org/nginx.png",
+    "license": "BSD-2-Clause",
+    "github_repo": "https://github.com/nginx/nginx",
+    "website": "https://nginx.org"
+  }
+}

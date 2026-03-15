@@ -1,0 +1,91 @@
+{
+  "id": "tautulli",
+  "name": "Tautulli",
+  "version": "2.14.5",
+  "category": "monitoring",
+  "description": "Monitoring and tracking tool for Plex Media Server with detailed statistics",
+  "author": "PSO Community",
+  "homepage": "https://tautulli.com",
+  "documentation": "https://github.com/Tautulli/Tautulli/wiki",
+  "installation": {
+    "method": "docker",
+    "image": "tautulli/tautulli:v2.14.5",
+    "container_port": 8181
+  },
+  "dependencies": {
+    "services": [
+      "jellyfin"
+    ],
+    "system": [
+      "docker"
+    ],
+    "conflicts": []
+  },
+  "ports": {
+    "http": 8301
+  },
+  "volumes": [
+    {
+      "host": "/var/pso/tautulli/config",
+      "container": "/config",
+      "type": "bind",
+      "readonly": false
+    }
+  ],
+  "environment": {
+    "TZ": "UTC"
+  },
+  "configuration": {
+    "user_inputs": []
+  },
+  "health_check": {
+    "type": "command",
+    "command": "wget -qO/dev/null http://localhost:8181 || exit 1",
+    "interval": 30,
+    "timeout": 10,
+    "retries": 3,
+    "start_period": 20
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": null,
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": null
+  },
+  "reverse_proxy": {
+    "enabled": true,
+    "subdomain": "tautulli",
+    "port": 8301,
+    "path": "/",
+    "ssl": true
+  },
+  "resources": {
+    "cpu_limit": "1.0",
+    "memory_limit": "512M"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "/var/pso/tautulli/config"
+    ],
+    "schedule": "0 4 * * *",
+    "retention": 14
+  },
+  "metadata": {
+    "tags": [
+      "monitoring",
+      "plex",
+      "statistics",
+      "media",
+      "analytics"
+    ],
+    "icon": "https://tautulli.com/images/logo-circle.png",
+    "license": "GPL-3.0",
+    "github_repo": "https://github.com/Tautulli/Tautulli"
+  },
+  "container_port": 8181
+}

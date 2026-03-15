@@ -1,0 +1,93 @@
+{
+  "id": "influxdb",
+  "name": "InfluxDB",
+  "version": "2.7.10",
+  "category": "storage",
+  "description": "High-performance time-series database for metrics, events, and real-time analytics",
+  "author": "PSO Community",
+  "homepage": "https://www.influxdata.com",
+  "documentation": "https://docs.influxdata.com/influxdb/",
+  "installation": {
+    "method": "docker",
+    "image": "influxdb:2.7.10"
+  },
+  "dependencies": {
+    "services": [],
+    "system": [
+      "docker"
+    ],
+    "conflicts": []
+  },
+  "ports": {
+    "http": 8086
+  },
+  "volumes": [
+    {
+      "host": "/var/pso/influxdb/data",
+      "container": "/var/lib/influxdb2",
+      "type": "bind",
+      "readonly": false
+    },
+    {
+      "host": "/var/pso/influxdb/config",
+      "container": "/etc/influxdb2",
+      "type": "bind",
+      "readonly": false
+    }
+  ],
+  "environment": {},
+  "configuration": {
+    "user_inputs": []
+  },
+  "health_check": {
+    "type": "command",
+    "command": "wget -qO/dev/null http://localhost:8086/health || exit 1",
+    "interval": 30,
+    "timeout": 10,
+    "retries": 5,
+    "start_period": 30
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": "echo 'Complete setup wizard at http://localhost:8086'",
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": null
+  },
+  "reverse_proxy": {
+    "enabled": true,
+    "subdomain": "influx",
+    "port": 8086,
+    "path": "/",
+    "ssl": true
+  },
+  "resources": {
+    "cpu_limit": "2.0",
+    "memory_limit": "2G"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "/var/pso/influxdb/data"
+    ],
+    "schedule": "0 1 * * *",
+    "retention": 30
+  },
+  "metadata": {
+    "tags": [
+      "database",
+      "time-series",
+      "metrics",
+      "monitoring",
+      "analytics"
+    ],
+    "icon": "https://www.influxdata.com/wp-content/uploads/influxdb-logo.svg",
+    "license": "MIT",
+    "github_repo": "https://github.com/influxdata/influxdb",
+    "website": "https://www.influxdata.com"
+  },
+  "container_port": 8086
+}

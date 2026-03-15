@@ -1,0 +1,22 @@
+# PSO Core Dependencies
+
+# Web Framework
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# Docker Integration
+docker>=7.0.0
+
+# Authentication
+PyJWT>=2.8.0
+bcrypt>=4.1.0
+cryptography>=41.0.0
+
+# Validation
+jsonschema>=4.20.0
+
+# Database (built-in with Python)
+# sqlite3 - built-in
+
+# Optional but recommended
+requests>=2.31.0

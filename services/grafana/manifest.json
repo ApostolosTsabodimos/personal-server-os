@@ -1,0 +1,100 @@
+{
+  "id": "grafana",
+  "name": "Grafana",
+  "version": "11.3.0",
+  "category": "monitoring",
+  "description": "Open-source analytics and interactive visualization platform for metrics",
+  "author": "PSO Community",
+  "homepage": "https://grafana.com",
+  "documentation": "https://grafana.com/docs/",
+  "installation": {
+    "method": "docker",
+    "image": "grafana/grafana:11.3.0"
+  },
+  "dependencies": {
+    "services": [
+      "influxdb"
+    ],
+    "system": [
+      "docker"
+    ],
+    "conflicts": []
+  },
+  "ports": {
+    "http": 8300
+  },
+  "volumes": [
+    {
+      "host": "/var/pso/grafana/data",
+      "container": "/var/lib/grafana",
+      "type": "bind",
+      "readonly": false
+    },
+    {
+      "host": "/var/pso/grafana/provisioning",
+      "container": "/etc/grafana/provisioning",
+      "type": "bind",
+      "readonly": false
+    }
+  ],
+  "environment": {
+    "GF_SERVER_HTTP_PORT": "8300",
+    "GF_SECURITY_ADMIN_USER": "admin",
+    "GF_SECURITY_ADMIN_PASSWORD": "__generate:hex_12__",
+    "GF_INSTALL_PLUGINS": ""
+  },
+  "configuration": {
+    "user_inputs": []
+  },
+  "health_check": {
+    "type": "command",
+    "command": "wget -qO/dev/null http://localhost:8300/api/health || exit 1",
+    "interval": 30,
+    "timeout": 10,
+    "retries": 5,
+    "start_period": 30
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": "echo 'Default credentials: admin/admin - Change on first login!'",
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": null
+  },
+  "reverse_proxy": {
+    "enabled": true,
+    "subdomain": "grafana",
+    "port": 8300,
+    "path": "/",
+    "ssl": true
+  },
+  "resources": {
+    "cpu_limit": "2.0",
+    "memory_limit": "1G"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "/var/pso/grafana/data"
+    ],
+    "schedule": "0 3 * * *",
+    "retention": 14
+  },
+  "metadata": {
+    "tags": [
+      "monitoring",
+      "metrics",
+      "visualization",
+      "dashboards",
+      "analytics"
+    ],
+    "icon": "https://grafana.com/static/assets/img/fav32.png",
+    "license": "AGPL-3.0",
+    "github_repo": "https://github.com/grafana/grafana",
+    "website": "https://grafana.com"
+  },
+  "container_port": 3000
+}

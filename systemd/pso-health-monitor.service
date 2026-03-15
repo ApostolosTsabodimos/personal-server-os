@@ -1,0 +1,20 @@
+[Unit]
+Description=PSO Health Monitor
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+WorkingDirectory=/home/YOUR_USERNAME/Personal-Server-OS
+ExecStart=/home/YOUR_USERNAME/Personal-Server-OS/.venv/bin/python -m core.health_monitor start
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=pso-health
+
+[Install]
+WantedBy=multi-user.target

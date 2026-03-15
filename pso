@@ -1,0 +1,1930 @@
+#!/bin/bash
+# PSO - Personal Server OS
+# Main CLI interface
+# Version: 0.5.6 (Session 27)
+
+set -e
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Colors & symbols
+# ─────────────────────────────────────────────────────────────────────────────
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+PURPLE='\033[0;35m'
+BOLD='\033[1m'
+RESET='\033[0m'
+
+CHECK="✓"
+CROSS="✗"
+ARROW="→"
+STAR="★"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Bootstrap
+# ─────────────────────────────────────────────────────────────────────────────
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$SCRIPT_DIR"
+
+# Activate virtual environment if available
+if [ -z "$VIRTUAL_ENV" ]; then
+    if [ -f ".venv/bin/activate" ]; then
+        source .venv/bin/activate 2>/dev/null || true
+    elif [ -f "venv/bin/activate" ]; then
+        source venv/bin/activate 2>/dev/null || true
+    fi
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Helper functions
+# ─────────────────────────────────────────────────────────────────────────────
+success() { echo -e "${GREEN}${CHECK}${RESET} $1"; }
+error()   { echo -e "${RED}${CROSS}${RESET} $1" >&2; }
+info()    { echo -e "${CYAN}${ARROW}${RESET} $1"; }
+warn()    { echo -e "${YELLOW}!${RESET} $1"; }
+
+# show_help_user() removed -- use pso help (single unified reference)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# REMOVED BLOCK START (show_help_user)
+# ─────────────────────────────────────────────────────────────────────────────
+show_help_user_REMOVED() {
+    cat << 'HELPEOF'
+╔════════════════════════════════════════════════════════════════╗
+║              PSO - Personal Server OS                          ║
+║              Beginner-Friendly Guide                           ║
+╚════════════════════════════════════════════════════════════════╝
+
+NEW TO PSO? Start here:
+  1. pso init                      Set up database (one-time)
+  2. pso dashboard start           Open web interface
+  3. pso catalog                   See what you can install
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BROWSING & INSTALLING SERVICES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  pso catalog                      Browse all available services
+  pso catalog info <service>       Full details about a service
+  pso catalog search <query>       Search (e.g. "media", "git")
+  pso install <service>            Install a service
+  pso list                         Show what you have installed
+
+  Example: pso install jellyfin
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MANAGING SERVICES (Start/Stop)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  pso start <service>              Start a service
+  pso stop <service>               Stop a service
+  pso restart <service>            Restart a service
+  pso status <service>             See if it is running
+  pso logs <service>               See last 100 lines of logs
+  pso logs <service> 500           See last 500 lines
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FINDING YOUR SERVICES (Addresses & Ports)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  pso discover list                Directory of running services + URLs
+  pso discover sync                Refresh after installing new services
+  pso discover info <service>      Get the exact URL for a service
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECURITY: Who Can Access Your Services?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Tier 0 = Only this computer         [DEFAULT - safest]
+  Tier 1 = Anyone on home network     [family]
+  Tier 2 = VPN only                   [you from anywhere]
+  Tier 3 = Public internet            [use with caution!]
+
+  sudo pso tier set <service> <0-3>   Change access level
+  pso tier list                       See all current tiers
+
+  Example: sudo pso tier set jellyfin 1   (let family watch)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PERFORMANCE: Limit How Much Resources a Service Uses
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Profiles:
+    tiny   = small dashboards/utilities  (256 MB RAM, 1 GB disk)
+    small  = web apps                    (512 MB RAM, 5 GB disk)  <- default
+    medium = media servers               (2 GB RAM, 20 GB disk)
+    large  = heavy apps / AI             (4 GB RAM, 100 GB disk)
+
+  pso resources set <service> --profile medium
+  pso resources stats <service>        See current CPU/memory usage
+  pso resources get <service>          See current limits
+
+  Example: pso resources set jellyfin --profile medium
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BACKUPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  pso backup create <service>          Create a backup
+  pso backup list                      See all backups
+  pso backup restore <service> <id>    Restore if something breaks
+
+  Tip: always backup before updating!
+    pso backup create nginx --note "before update"
+    pso update apply nginx
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MONITORING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  pso health status                    Check all services
+  pso health check <service>           Check one service
+  pso dashboard start                  Open web UI at :5000
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+UPDATES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  pso update check                     See what needs updating
+  pso update apply <service>           Update (auto-backups first)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WEB DASHBOARD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  pso dashboard start                  Start (opens at :5000)
+  pso dashboard stop                    Stop the server
+  pso dashboard status                  Show status + log path
+  pso dashboard restart                 Stop then start
+  pso dashboard logs                    Show last 50 log lines
+  pso dashboard logs follow             Follow live (Ctrl+C to stop)
+  pso dashboard logs <N>                Show last N lines
+  pso dashboard secure                  Enable HTTPS (self-signed cert)
+  pso dashboard unsecure                Disable HTTPS, revert to HTTP
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DAEMON (auto-start on boot)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  pso install-daemon                    Register dashboard as system service
+                                        Linux: systemd user service (~/.config/systemd/user/)
+                                        macOS: launchd agent (~/Library/LaunchAgents/)
+  pso uninstall-daemon                  Remove the registered service
+  Login credentials set during: pso init
+  Logs: ~/.pso_dev/dashboard.log        (tail -f to follow live)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMMON WORKFLOWS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+First-time setup:
+  pso init
+  pso dashboard start
+  Open http://localhost:5000
+
+Install Jellyfin media server:
+  pso install jellyfin
+  sudo pso tier set jellyfin 1
+  pso resources set jellyfin --profile medium
+  pso discover info jellyfin           <- get the URL
+
+Something broke? Troubleshoot:
+  pso logs <service>
+  pso health check <service>
+  pso restart <service>
+  pso backup restore <service> <id>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  pso help dev        Full technical reference
+  pso-menu            Interactive guided menu
+HELPEOF
+}
+# ─────────────────────────────────────────────────────────────────────────────
+# REMOVED BLOCK END
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Help: full reference (pso help)
+# ─────────────────────────────────────────────────────────────────────────────
+show_help_dev() {
+    cat << 'HELPEOF'
+╔════════════════════════════════════════════════════════════════╗
+║              PSO - Personal Server OS v0.5.6                   ║
+║              Developer Reference                               ║
+╚════════════════════════════════════════════════════════════════╝
+
+QUICK START
+  pso init                             Initialize database
+  pso install <service>                Install service
+  pso list                             List installed services
+  pso dashboard start                  Start web UI (:5000)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SERVICE CATALOG  (what you can install)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  catalog                              Browse all available services
+  catalog info <service>               Full details on one service
+  catalog search <query>               Search by name/category/tag
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SERVICE MANAGEMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  install <service> [--dry-run]        Install service
+  uninstall <service>                  Remove service + data
+  start|stop|restart <service>         Control service
+  start-all                            Start all installed services
+  stop-all                             Stop all running services
+  pause                                Stop all services + dashboard (closing laptop)
+  resume                               Start dashboard + all services (coming back)
+  status <service>                     Service details + health
+  logs <service> [lines]               View logs (default: 100)
+  list                                 List all installed
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECURITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  rbac status                          Roles and users overview
+  rbac role list|create|delete|perms   Manage roles
+  rbac user assign|revoke <user> <role>
+  rbac check <user> <permission>       Test access
+
+  secrets list                         All stored secrets (names only)
+  secrets set <n> <value> [svc]        Store encrypted secret
+  secrets get <n>                      Retrieve and print
+  secrets delete <n>                   Remove secret
+  secrets export                       Decrypt all to JSON (backup)
+
+  audit show [--event X] [--user X] [--warn]   View audit trail
+  audit stats                          Summary and top events
+
+  rate-limit status                    Stats: violations, bans, blacklist counts
+  rate-limit blacklist <ip> --reason X Permanent IP block + iptables
+  rate-limit unblacklist <ip>          Remove from permanent blacklist
+  rate-limit whitelist <ip> --reason X Whitelist IP (bypass rate limits)
+  rate-limit bans                      Show active temporary bans
+  rate-limit violations                Show recent violations log
+  rate-limit cleanup                   Remove expired bans
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  deps                                 Full dependency graph (all services)
+  deps <service>                       Focus: what it needs + what needs it
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  discover list                        Directory of all services + URLs
+  discover sync                        Refresh registry from installed
+  discover info <service>              Address, port, status, history
+  discover search <query>              Search registry
+  discover server                      Show host IP and hostname
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MIGRATION & IMPORT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  migrate status                       Show managed vs unmanaged containers
+  migrate compose <file> [--dry-run]   Import from docker-compose.yml
+  migrate adopt [--all] [<name> ...]   Adopt running Docker containers
+  migrate export [file]                Export PSO registry to JSON
+  migrate import <file> [--dry-run]    Import PSO registry from JSON
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECURITY: TIER SYSTEM (0=Internal 1=LAN 2=VPN 3=Public)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  tier list                            Show all service tiers
+  tier status <service>                Check one service
+  tier set <service> <0-3>  [sudo]     Change tier
+  tier history <service>               Audit log of changes
+  tier info                            Explain the tier system
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BACKUPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  backup create <service> [--note ""]  Create backup
+  backup restore <service> <id>        Restore backup
+  backup list [service]                List backups
+  backup verify <id>                   Check integrity
+  backup prune <service> [--keep N]    Delete old (default: keep 5)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+UPDATES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  update check [service]               Check for updates
+  update apply <service>               Update (auto-backup first)
+  update history [service]             Show update log
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+HEALTH MONITORING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  health status                        All services health overview
+  health check <service>               Manual health check
+  health history <service>             Check history
+  health start                         Start background monitor daemon
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LOG AGGREGATOR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  logs-agg show [service] [--level error]  Recent logs (all or one service)
+  logs-agg tail [service]                  Live tail (Ctrl+C to stop)
+  logs-agg search <query> [service]        Full-text search with highlight
+  logs-agg collect                         One-shot ingest from containers
+  logs-agg stats                           Log volume + error count per service
+  logs-agg start                           Background collection daemon
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  notifications status                 Show configured channels + recent alerts
+  notifications test email|webhook     Send a test notification
+  notifications config set [options]   Configure email/webhook/desktop
+  notifications history                View alert history
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+GRAFANA INTEGRATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  grafana status                       Check Grafana reachability
+  grafana provision                    Push PSO dashboard + datasource
+  grafana serve-metrics                Start /metrics endpoint on :9090
+  grafana install                      Install Grafana via PSO
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RESOURCES  (profiles: tiny / small / medium / large / unlimited)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  resources profiles                   List all profiles + limits
+  resources get <service>              Show current limits
+  resources set <service>              Set limits:
+    --profile <tiny|small|medium|large|unlimited>
+    --cpu <cores> --memory <MB>
+    --disk <MB> --restart <policy>
+  resources apply <service>            Apply limits to container
+  resources stats <service>            Live CPU/memory/disk usage
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+METRICS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  metrics show                         Display all latest metric values
+  metrics collect                      One-time collection run
+  metrics query <metric> [service]     Query stored history
+  metrics export [service]             Prometheus-format export
+  metrics start                        Start background collector
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+USERS & PORTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  user list                            List users
+  user add <user> <pass>               Create user
+  user add-admin <user> <pass>         Create admin user
+  user cleanup                         Remove expired sessions
+
+  ports                                Show all port allocations
+  ports available                      List free ports
+  ports check <port>                   Check if port is free
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DASHBOARD & SYSTEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  dashboard start|stop|status|restart|logs  Web UI control
+  init                                 Initialize database
+  doctor                               System diagnostics
+  fix-blockers                         Auto-fix common issues
+  version                              Show version + progress
+  dev scan|tree|status                 Development progress tracking
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TESTING & VALIDATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  pso-check                            Full automated test suite (structural + functional + CLI + manifests + tests)
+  pso-check --quick                    Structural checks only
+  pso-check --functional               Functional tests only
+  pso-check --cli-only                 CLI command sweep only
+  pso-check --manifests                Manifest + script + asset checks only
+  pso-check --tests                    Run existing test suite only
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+COMMON WORKFLOWS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Pause everything (e.g. closing laptop):
+  pso pause                            Stop all services + dashboard
+  pso resume                           Bring everything back up
+
+Install and configure:
+  pso install jellyfin
+  sudo pso tier set jellyfin 1
+  pso resources set jellyfin --profile medium
+  pso discover info jellyfin
+
+Backup, update, verify:
+  pso backup create nginx --note "pre-update"
+  pso update apply nginx
+  pso health check nginx
+
+Monitor performance:
+  pso resources stats nginx
+  pso metrics query service_cpu_percent nginx
+  pso logs nginx 200
+
+Troubleshoot:
+  pso status nginx
+  pso logs nginx 500
+  pso health history nginx
+  pso restart nginx
+
+MORE HELP: pso-menu (interactive)
+HELPEOF
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Help dispatcher -- pso help always shows the full reference
+# ─────────────────────────────────────────────────────────────────────────────
+show_help() {
+    # 'pso help', 'pso help dev', 'pso help developer' all show the same thing
+    # show_help_user was removed -- one unified reference for everyone
+    show_help_dev
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# init_pso
+# ─────────────────────────────────────────────────────────────────────────────
+init_pso() {
+    info "Initializing PSO..."
+
+    info "Checking dependencies..."
+    python3 << 'PYEOF'
+try:
+    import flask, docker, jwt, bcrypt, jsonschema
+    print("OK All Python dependencies installed")
+except ImportError as e:
+    print(f"MISSING dependency: {e}")
+    print("\nInstall with:")
+    print("  pip install -r requirements.txt --break-system-packages")
+    exit(1)
+PYEOF
+
+    info "Initializing database..."
+    python3 << 'PYEOF'
+from core.database import Database
+from core.port_manager import PortManager
+from core.auth import Auth
+try:
+    db = Database()
+    pm = PortManager()
+    auth = Auth(db)
+    print("OK Database initialized")
+    print("OK Default admin user created")
+    print("\nSECURITY: Run 'pso user passwd admin' to set your password!")
+except Exception as e:
+    print(f"FAILED: {e}")
+    exit(1)
+PYEOF
+
+    success "PSO initialized!"
+    info "Next steps:"
+    echo "  1. pso user passwd admin"
+    echo "  2. pso dashboard start"
+    echo "  3. Open http://localhost:5000"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# doctor
+# ─────────────────────────────────────────────────────────────────────────────
+doctor() {
+    echo -e "${BOLD}PSO System Diagnostics${RESET}"
+    echo "════════════════════════════════════════════"
+    echo
+
+    command -v python3 &>/dev/null && success "Python 3 installed" || error "Python 3 not found"
+
+    if command -v docker &>/dev/null; then
+        success "Docker installed"
+        docker ps &>/dev/null && success "Docker running" || error "Docker not running"
+    else
+        error "Docker not installed"
+    fi
+
+    python3 << 'PYEOF'
+import sys
+deps = {
+    'flask':      'Flask web framework',
+    'docker':     'Docker SDK',
+    'jwt':        'PyJWT authentication',
+    'bcrypt':     'Password hashing',
+    'jsonschema': 'Manifest validation',
+}
+missing = []
+for module, desc in deps.items():
+    try:
+        __import__(module)
+        print(f"  OK  {desc}")
+    except ImportError:
+        print(f"  MISSING  {desc}")
+        missing.append(module)
+if missing:
+    print(f"\nInstall missing: pip install {' '.join(missing)} --break-system-packages")
+    sys.exit(1)
+PYEOF
+
+    if [ -f "/var/pso/pso.db" ] || [ -f "$HOME/.pso_dev/pso.db" ]; then
+        success "Database found"
+    else
+        warn "Database not initialized -- run: pso init"
+    fi
+
+    pgrep -f "api.py" >/dev/null && success "Dashboard running" || info "Dashboard not running (pso dashboard start)"
+
+    echo
+    success "Diagnostics complete"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# fix-blockers
+# ─────────────────────────────────────────────────────────────────────────────
+fix_blockers() {
+    echo -e "${BOLD}Fixing Common Issues...${RESET}"
+    echo
+
+    info "Installing missing dependencies..."
+    pip install jsonschema flask docker PyJWT bcrypt --break-system-packages &>/dev/null \
+        && success "Dependencies installed" || warn "Check pip installation"
+
+    info "Initializing database..."
+    python3 << 'PYEOF' &>/dev/null && success "Database initialized" || warn "Database may already exist"
+from core.database import Database
+from core.port_manager import PortManager
+Database()
+PortManager()
+PYEOF
+
+    if sudo netstat -tuln 2>/dev/null | grep -q ":80 "; then
+        warn "Port 80 in use -- attempting to free..."
+        sudo fuser -k 80/tcp &>/dev/null && success "Port 80 freed" || warn "Could not free port 80"
+    else
+        success "Port 80 available"
+    fi
+
+    info "Clearing Python cache..."
+    find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+    find . -type f -name "*.pyc" -delete 2>/dev/null || true
+    success "Cache cleared"
+
+    echo
+    success "Done! Clear browser cache and refresh dashboard."
+}
+
+# =============================================================================
+# MAIN COMMAND DISPATCHER
+# =============================================================================
+case "$1" in
+
+    # ── Help ──────────────────────────────────────────────────────────────────
+    ""|help|--help|-h)
+        show_help "$2"
+        ;;
+
+    # ── System ────────────────────────────────────────────────────────────────
+    init)
+        init_pso
+        ;;
+
+    doctor)
+        doctor
+        ;;
+
+    fix-blockers)
+        fix_blockers
+        ;;
+
+    version)
+        echo "PSO v0.5.6 (Session 27)"
+        echo "Progress: 56.1% (18.5/33 components)"
+        ;;
+
+    # ── Service install / remove ──────────────────────────────────────────────
+    install)
+        if [ -z "$2" ]; then
+            error "Service name required"
+            echo "Usage: pso install <service> [--dry-run]"
+            echo "Tip:   pso catalog   <- see what is available"
+            exit 1
+        fi
+        SERVICE="$2"
+        shift 2
+        DRY_RUN="False"
+        SKIP_DEPS="False"
+        while [[ $# -gt 0 ]]; do
+            case $1 in
+                --dry-run)            DRY_RUN="True";  shift ;;
+                --skip-dependencies)  SKIP_DEPS="True"; shift ;;
+                *) error "Unknown option: $1"; exit 1 ;;
+            esac
+        done
+        info "Installing $SERVICE..."
+        python3 << EOF
+from core.installer import install_service
+try:
+    install_service('$SERVICE', dry_run=$DRY_RUN, skip_dependencies=$SKIP_DEPS)
+    print("\nInstallation complete!")
+    print("\nNext steps:")
+    print("  pso start $SERVICE")
+    print("  pso discover sync")
+    print("  pso discover info $SERVICE   <- get the URL")
+except Exception as e:
+    print(f"\nInstallation failed: {e}")
+    exit(1)
+EOF
+        ;;
+
+    uninstall)
+        [ -z "$2" ] && { error "Service name required"; exit 1; }
+        warn "This will DELETE all data for $2"
+        read -p "Continue? (yes/no): " confirm
+        [ "$confirm" != "yes" ] && { info "Cancelled"; exit 0; }
+        python3 << EOF
+from core.service_manager import ServiceManager
+mgr = ServiceManager()
+try:
+    mgr.remove('$2', remove_volumes=True)
+    print("Service uninstalled: $2")
+except Exception as e:
+    print(f"Error: {e}")
+    exit(1)
+EOF
+        ;;
+
+    # ── Service control ───────────────────────────────────────────────────────
+    start|stop|restart)
+        [ -z "$2" ] && { error "Service name required"; exit 1; }
+        python3 << EOF
+from core.service_manager import ServiceManager
+mgr = ServiceManager()
+try:
+    mgr.$1('$2')
+    print("$1: $2")
+except Exception as e:
+    print(f"Error: {e}")
+    exit(1)
+EOF
+        ;;
+
+    status)
+        [ -z "$2" ] && { error "Service name required"; exit 1; }
+        # BUGFIX: capture $2 before heredoc; use unquoted EOF so variable expands
+        SERVICE_ID="$2"
+        python3 << EOF
+from core.service_manager import ServiceManager
+from core.health_monitor import HealthMonitor
+from core.database import Database
+from core.firewall_manager import FirewallManager
+
+mgr = ServiceManager()
+db  = Database()
+hm  = HealthMonitor(db, mgr)
+fw  = FirewallManager(db)
+
+service_id = '$SERVICE_ID'
+status = mgr.get_status(service_id)
+health = hm.check_service(service_id)
+tier   = fw.get_service_tier(service_id)
+
+tier_labels = ['Internal (this machine)', 'LAN (home network)', 'VPN', 'Public internet']
+print(f"\n{service_id} Status:")
+print("=" * 50)
+print(f"  Status:  {status.get('status', 'unknown')}")
+print(f"  Health:  {health.get('status', 'unknown')}")
+print(f"  Tier:    {tier} -- {tier_labels[tier]}")
+if status.get('uptime'):
+    print(f"  Uptime:  {status['uptime']}")
+print()
+EOF
+        ;;
+
+    logs)
+        [ -z "$2" ] && { error "Service name required"; exit 1; }
+        LINES="${3:-100}"
+        docker logs "pso-$2" --tail "$LINES" 2>/dev/null || error "Service not found or not running"
+        ;;
+
+    list)
+        python3 << 'PYEOF'
+from core.database import Database
+from core.service_manager import ServiceManager
+db  = Database()
+mgr = ServiceManager()
+services = db.list_services()
+if not services:
+    print("\nNo services installed.\n")
+    print("  pso catalog          <- browse available services")
+    print("  pso install nginx    <- install one")
+else:
+    print(f"\n{len(services)} Installed Service(s):")
+    print("=" * 60)
+    for s in services:
+        state = mgr.get_status(s['service_id']).get('status', 'unknown')
+        color = '\033[0;32m' if state == 'running' else '\033[0;31m'
+        print(f"  {s['service_name']:<28} {color}{state}\033[0m")
+    print()
+    print("  pso discover list    <- see URLs and addresses")
+PYEOF
+        ;;
+
+    # ── Catalog (all available services to install) ───────────────────────────
+    catalog)
+        case "$2" in
+            "")
+                # Full organized catalog from service_recommendations.py
+                # SCRIPT_DIR is expanded by bash before Python sees it
+                python3 << PYEOF
+import sys, os
+sys.path.insert(0, '$SCRIPT_DIR')
+
+try:
+    from core.service_recommendations import CATEGORIES, STARTER_PACKS
+except ImportError:
+    print("\n  Could not load core/service_recommendations.py")
+    print("  Make sure it exists in: $SCRIPT_DIR/core/\n")
+    exit(1)
+
+CATEGORY_DISPLAY = [
+    ("infrastructure",  "Infrastructure",    "  "),
+    ("security",        "Security",          "  "),
+    ("media",           "Media & Downloads", "  "),
+    ("productivity",    "Productivity",      "  "),
+    ("development",     "Development",       "  "),
+    ("monitoring",      "Monitoring",        "  "),
+    ("home-automation", "Home Automation",   "  "),
+]
+
+DIFF = {
+    "easy":   "\033[0;32measy  \033[0m",
+    "medium": "\033[1;33mmedium\033[0m",
+    "hard":   "\033[0;31mhard  \033[0m",
+}
+RECOMMENDED = {"vaultwarden", "nginx", "wireguard", "uptime-kuma"}
+
+# Try to enrich with manifest descriptions if manifests exist
+manifest_desc = {}
+try:
+    from core.manifest import ManifestLoader
+    loader = ManifestLoader()
+    for svc in loader.list_available():
+        try:
+            m = loader.load(svc)
+            if getattr(m, 'description', ''):
+                manifest_desc[svc] = m.description
+        except Exception:
+            pass
+except Exception:
+    pass
+
+# Group by category, sorted by priority
+grouped = {}
+for svc_id, info in CATEGORIES.items():
+    cat = info.get('category', 'other')
+    grouped.setdefault(cat, []).append((svc_id, info))
+for cat in grouped:
+    grouped[cat].sort(key=lambda x: (x[1].get('priority', 99), x[0]))
+
+W = 70
+print()
+print("\033[1m" + chr(9556) + chr(9552)*(W-2) + chr(9559) + "\033[0m")
+print("\033[1m" + chr(9553) + "  PSO SERVICE CATALOG  --  All Available Services".center(W-2) + chr(9553) + "\033[0m")
+total = len(CATEGORIES)
+sub = f"{total} services  |  pso install <service>  |  * = recommended"
+print("\033[1m" + chr(9553) + sub.center(W-2) + chr(9553) + "\033[0m")
+print("\033[1m" + chr(9562) + chr(9552)*(W-2) + chr(9565) + "\033[0m")
+
+for cat_key, cat_name, emoji in CATEGORY_DISPLAY:
+    services = grouped.get(cat_key, [])
+    if not services:
+        continue
+    print(f"\n\033[1;36m  [{cat_name}]\033[0m")
+    print("  " + "-" * (W-4))
+    for svc_id, info in services:
+        desc = manifest_desc.get(svc_id) or info.get('why_recommended', '')
+        desc = (desc[:46] + "...") if len(desc) > 47 else desc
+        diff = DIFF.get(info.get('setup_difficulty', ''), '      ')
+        star = "*" if svc_id in RECOMMENDED else " "
+        print(f"  {star} \033[1m{svc_id:<22}\033[0m {diff}  {desc}")
+
+if STARTER_PACKS:
+    print(f"\n\033[1;36m  [Starter Packs]\033[0m")
+    print("  " + "-" * (W-4))
+    for pack_id, pack in STARTER_PACKS.items():
+        if not pack.get('services'):
+            continue
+        print(f"  \033[1m{pack_id:<16}\033[0m  {pack.get('description','')}")
+        print(f"  {'':16}  \033[2m{', '.join(pack['services'])}\033[0m")
+
+print()
+print("  pso catalog info <service>   -- full details")
+print("  pso catalog search <query>   -- search (e.g. 'media', 'git')")
+print("  pso install <service>        -- install a service")
+print()
+PYEOF
+                ;;
+
+            search)
+                [ -z "$3" ] && { error "Search query required"; echo "Usage: pso catalog search <query>"; exit 1; }
+                QUERY="$3"
+                python3 << PYEOF
+import sys, os
+sys.path.insert(0, '$SCRIPT_DIR')
+from core.service_recommendations import CATEGORIES
+
+query = '$QUERY'.lower()
+print(f"\n  Search results for '{query}':\n")
+found = 0
+for svc_id, info in sorted(CATEGORIES.items()):
+    desc = info.get('why_recommended', '')
+    tags = ' '.join(info.get('tags', []))
+    if (query in svc_id.lower() or query in info.get('category','').lower()
+            or query in desc.lower() or query in tags.lower()):
+        print(f"  \033[1m{svc_id:<24}\033[0m [{info.get('category','other')}]  {desc[:45]}")
+        found += 1
+if found == 0:
+    print(f"  No services matched '{query}'")
+    print("  Try: media, git, monitor, productivity, security")
+print()
+PYEOF
+                ;;
+
+            info)
+                [ -z "$3" ] && { error "Service name required"; echo "Usage: pso catalog info <service>"; exit 1; }
+                SERVICE_NAME="$3"
+                python3 << PYEOF
+import sys, os
+sys.path.insert(0, '$SCRIPT_DIR')
+from core.service_recommendations import CATEGORIES, STARTER_PACKS
+
+svc_id = '$SERVICE_NAME'
+info = CATEGORIES.get(svc_id)
+
+if not info:
+    print(f"\n  '{svc_id}' not found in catalog")
+    print("  Run 'pso catalog' to see all available services\n")
+    exit(1)
+
+TIER_LABEL = {0: 'internal only', 1: 'LAN (home network)', 2: 'VPN recommended', 3: 'public internet'}
+DIFF_LABEL  = {'easy': 'Easy', 'medium': 'Medium', 'hard': 'Hard'}
+
+print(f"\n  {'─'*56}")
+print(f"  \033[1m{svc_id}\033[0m")
+print(f"  {'─'*56}")
+print(f"  Category:    {info.get('category', 'other')}")
+print(f"  Description: {info.get('why_recommended', 'N/A')}")
+print(f"  Difficulty:  {DIFF_LABEL.get(info.get('setup_difficulty',''), '?')}")
+tier = info.get('tier_recommendation', 0)
+print(f"  Default tier: {tier} -- {TIER_LABEL.get(tier, 'unknown')}")
+tags = info.get('tags', [])
+if tags:
+    print(f"  Tags:        {', '.join(tags)}")
+in_packs = [pid for pid, pack in STARTER_PACKS.items() if svc_id in pack.get('services', [])]
+if in_packs:
+    print(f"  In packs:    {', '.join(in_packs)}")
+
+# Try manifest for extra info
+try:
+    from core.manifest import ManifestLoader
+    m = ManifestLoader().load(svc_id)
+    if getattr(m, 'version', ''):
+        print(f"  Version:     {m.version}")
+    if getattr(m, 'ports', {}):
+        print(f"  Ports:       {', '.join(str(v) for v in m.ports.values())}")
+    if getattr(m, 'dependencies', {}).get('services'):
+        print(f"  Depends on:  {', '.join(m.dependencies['services'])}")
+except Exception:
+    pass
+
+print()
+print(f"  Install with:  pso install {svc_id}")
+print()
+PYEOF
+                ;;
+
+            # Kept for developer use only
+            validate)
+                [ -z "$3" ] && { error "Service name required"; exit 1; }
+                python3 -m core.manifest_validator "$3"
+                ;;
+
+            *)
+                error "Unknown catalog command: $2"
+                echo "Use: pso catalog [info|search|validate]"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    # ── Migration & Import ────────────────────────────────────────────────────
+    migrate)
+        case "$2" in
+            compose)
+                shift 2
+                python3 -m core.migration_tools compose "$@"
+                ;;
+            adopt)
+                shift 2
+                python3 -m core.migration_tools adopt "$@"
+                ;;
+            export)
+                shift 2
+                python3 -m core.migration_tools export "$@"
+                ;;
+            import)
+                shift 2
+                python3 -m core.migration_tools import "$@"
+                ;;
+            status|"")
+                python3 -m core.migration_tools status
+                ;;
+            *)
+                error "Unknown migrate command: $2"
+                echo "Use: pso migrate [status|compose|adopt|export|import]"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    # ── Dependency map ────────────────────────────────────────────────────────
+    deps)
+        SERVICE_ID="${2:-}"
+        python3 << PYEOF
+import sys, json
+sys.path.insert(0, '$SCRIPT_DIR')
+from core.database import Database
+
+BOLD  = "\033[1m"
+GREEN = "\033[0;32m"
+CYAN  = "\033[1;36m"
+DIM   = "\033[2m"
+YELLOW= "\033[1;33m"
+RED   = "\033[0;31m"
+RESET = "\033[0m"
+
+db = Database()
+
+# Load all services and dependency edges
+services  = {s['service_id']: s for s in db.list_services()}
+edges = []  # (service_id, depends_on)
+
+with db._get_connection() as conn:
+    rows = conn.execute("SELECT service_id, depends_on FROM service_dependencies").fetchall()
+    for r in rows:
+        edges.append((r['service_id'], r['depends_on']))
+
+focus = '$SERVICE_ID'.strip()
+
+if not services:
+    print("\n  No services installed.\n")
+    sys.exit(0)
+
+if focus and focus not in services:
+    print(f"\n  {RED}Service not found: {focus}{RESET}")
+    print(f"  Run 'pso deps' to see all, or 'pso list' for installed services.\n")
+    sys.exit(1)
+
+# Build adjacency: who does each service depend on, and who depends on it
+depends_on  = {}   # service_id  → [list of services it needs]
+required_by = {}   # service_id  → [list of services that need it]
+for svc_id in services:
+    depends_on[svc_id]  = []
+    required_by[svc_id] = []
+
+for (svc, dep) in edges:
+    if svc in depends_on:
+        depends_on[svc].append(dep)
+    if dep in required_by:
+        required_by[dep].append(svc)
+
+def status_color(svc_id):
+    st = services.get(svc_id, {}).get('status', 'unknown')
+    return {
+        'running':  GREEN,
+        'stopped':  RED,
+        'error':    RED,
+        'imported': DIM,
+    }.get(st, DIM)
+
+def svc_label(svc_id):
+    svc = services.get(svc_id, {})
+    name = svc.get('service_name', svc_id)
+    col  = status_color(svc_id)
+    return f"{col}{BOLD}{svc_id}{RESET}{DIM} ({name}){RESET}"
+
+# ── Single service view ────────────────────────────────────────────────────
+if focus:
+    svc = services[focus]
+    print(f"\n  {BOLD}Dependency map: {focus}{RESET}")
+    print("  " + "─" * 56)
+
+    deps = depends_on.get(focus, [])
+    revs = required_by.get(focus, [])
+
+    if deps:
+        print(f"\n  {CYAN}Depends on:{RESET}  ({focus} needs these to run)")
+        for d in sorted(deps):
+            col = status_color(d)
+            st  = services.get(d, {}).get('status', 'not installed')
+            installed = "✓" if d in services else "✗ NOT INSTALLED"
+            print(f"    {col}{'✓' if d in services else '✗'}{RESET}  {svc_label(d)}")
+    else:
+        print(f"\n  {DIM}No dependencies — {focus} runs standalone{RESET}")
+
+    if revs:
+        print(f"\n  {CYAN}Required by:{RESET}  (these need {focus})")
+        for r in sorted(revs):
+            print(f"    ▸  {svc_label(r)}")
+    else:
+        print(f"\n  {DIM}Nothing depends on {focus}{RESET}")
+
+    print()
+    sys.exit(0)
+
+# ── Full graph view ────────────────────────────────────────────────────────
+# Find roots (services nobody depends on) and leaves (services with no deps)
+roots  = [s for s in services if not required_by.get(s)]
+leaves = [s for s in services if not depends_on.get(s)]
+all_connected = set(s for (a,b) in edges for s in (a,b))
+standalone = [s for s in services if s not in all_connected]
+
+print(f"\n  {BOLD}Service Dependency Graph{RESET}  ({len(services)} services, {len(edges)} dependencies)")
+print("  " + "─" * 60)
+
+if not edges:
+    print(f"\n  {DIM}No dependencies recorded yet.")
+    print(f"  Dependencies are set in service manifests (manifest.json){RESET}")
+    print(f"\n  Installed services:")
+    for svc_id in sorted(services):
+        svc = services[svc_id]
+        col = status_color(svc_id)
+        print(f"    {col}●{RESET}  {BOLD}{svc_id}{RESET}  {DIM}standalone{RESET}")
+    print()
+    sys.exit(0)
+
+# Draw dependency chains top-down
+# Find services with no dependents (top of chain)
+top_level = [s for s in services if not required_by.get(s) and depends_on.get(s)]
+bottom    = [s for s in services if not depends_on.get(s)]
+
+printed = set()
+
+def print_tree(svc_id, prefix="", is_last=True, depth=0):
+    if depth > 6:
+        return
+    connector = "└─ " if is_last else "├─ "
+    col = status_color(svc_id)
+    svc = services.get(svc_id, {})
+    name = svc.get('service_name', svc_id)
+    cycle_mark = f"  {DIM}(↑ already shown){RESET}" if svc_id in printed else ""
+    print(f"  {prefix}{connector}{col}{BOLD}{svc_id}{RESET}  {DIM}{name}{RESET}{cycle_mark}")
+    if svc_id not in printed:
+        printed.add(svc_id)
+        deps = sorted(depends_on.get(svc_id, []))
+        for i, dep in enumerate(deps):
+            ext = "   " if is_last else "│  "
+            print_tree(dep, prefix + ext, i == len(deps)-1, depth+1)
+
+# Print each top-level chain
+shown_roots = set()
+for svc_id in sorted(services):
+    if not required_by.get(svc_id) and depends_on.get(svc_id):
+        if svc_id not in shown_roots:
+            shown_roots.add(svc_id)
+            col = status_color(svc_id)
+            svc = services.get(svc_id, {})
+            name = svc.get('service_name', svc_id)
+            print(f"\n  {col}{BOLD}{svc_id}{RESET}  {DIM}{name}{RESET}")
+            deps = sorted(depends_on.get(svc_id, []))
+            for i, dep in enumerate(deps):
+                print_tree(dep, "", i == len(deps)-1)
+
+# Standalone services (no edges at all)
+if standalone:
+    print(f"\n  {DIM}Standalone (no dependencies):{RESET}")
+    for svc_id in sorted(standalone):
+        col = status_color(svc_id)
+        svc = services.get(svc_id, {})
+        name = svc.get('service_name', svc_id)
+        print(f"    {col}●{RESET}  {svc_id}  {DIM}{name}{RESET}")
+
+print()
+print(f"  {DIM}pso deps <service>   — focus on one service{RESET}")
+print()
+PYEOF
+        ;;
+
+    # ── RBAC ──────────────────────────────────────────────────────────────────
+    rbac)
+        case "$2" in
+            status|"") python3 -m core.rbac status ;;
+            role)      shift 2; python3 -m core.rbac role "$@" ;;
+            user)      shift 2; python3 -m core.rbac user "$@" ;;
+            check)
+                [ -z "$3" ] && { error "Usage: pso rbac check <user> <permission>"; exit 1; }
+                python3 -m core.rbac check "$3" "$4"
+                ;;
+            *) error "Use: pso rbac [status|role|user|check]"; exit 1 ;;
+        esac
+        ;;
+
+    # ── Secrets ───────────────────────────────────────────────────────────────
+    secrets)
+        case "$2" in
+            list|"")  python3 -m core.secrets_manager list ;;
+            set)
+                [ -z "$3" ] && { error "Usage: pso secrets set <NAME> <value>"; exit 1; }
+                python3 -m core.secrets_manager set "$3" "$4" "${5:-}" "${6:-}"
+                ;;
+            get)
+                [ -z "$3" ] && { error "Usage: pso secrets get <NAME>"; exit 1; }
+                python3 -m core.secrets_manager get "$3"
+                ;;
+            delete)
+                [ -z "$3" ] && { error "Usage: pso secrets delete <NAME>"; exit 1; }
+                python3 -m core.secrets_manager delete "$3"
+                ;;
+            export) python3 -m core.secrets_manager export ;;
+            import)
+                [ -z "$3" ] && { error "Usage: pso secrets import <file.json>"; exit 1; }
+                python3 -m core.secrets_manager import "$3"
+                ;;
+            *) error "Use: pso secrets [list|set|get|delete|export|import]"; exit 1 ;;
+        esac
+        ;;
+
+    # ── Audit log ─────────────────────────────────────────────────────────────
+    audit)
+        case "$2" in
+            show|"") shift 2; python3 -m core.audit_log show "$@" ;;
+            stats)   python3 -m core.audit_log stats ;;
+            export)  python3 -m core.audit_log export ;;
+            *) error "Use: pso audit [show|stats|export]"; exit 1 ;;
+        esac
+        ;;
+
+    # ── Rate limiter ──────────────────────────────────────────────────────────
+    rate-limit)
+        case "$2" in
+            status|"")    python3 -m core.rate_limiter stats ;;
+            blacklist)
+                [ -z "$3" ] && { error "Usage: pso rate-limit blacklist <ip> --reason <r>"; exit 1; }
+                shift 2; python3 -m core.rate_limiter blacklist "$@"
+                ;;
+            unblacklist)
+                [ -z "$3" ] && { error "Usage: pso rate-limit unblacklist <ip>"; exit 1; }
+                python3 -m core.rate_limiter unblacklist "$3"
+                ;;
+            whitelist)
+                [ -z "$3" ] && { error "Usage: pso rate-limit whitelist <ip> --reason <r>"; exit 1; }
+                shift 2; python3 -m core.rate_limiter whitelist "$@"
+                ;;
+            unwhitelist)
+                [ -z "$3" ] && { error "Usage: pso rate-limit unwhitelist <ip>"; exit 1; }
+                python3 -m core.rate_limiter unwhitelist "$3"
+                ;;
+            bans)        python3 -m core.rate_limiter list-bans ;;
+            violations)  python3 -m core.rate_limiter violations ;;
+            cleanup)     python3 -m core.rate_limiter cleanup ;;
+            *) error "Use: pso rate-limit [status|blacklist|unblacklist|whitelist|unwhitelist|bans|violations|cleanup]"; exit 1 ;;
+        esac
+        ;;
+
+    # ── RBAC ends — Discovery next ────────────────────────────────────────────
+    # ── Service Discovery ─────────────────────────────────────────────────────
+    discover)
+        case "$2" in
+            list|"")
+                python3 -m core.service_discovery list
+                ;;
+            info)
+                [ -z "$3" ] && { error "Service name required"; echo "Usage: pso discover info <service>"; exit 1; }
+                python3 -m core.service_discovery info "$3"
+                ;;
+            sync)
+                python3 -m core.service_discovery sync
+                ;;
+            search)
+                [ -z "$3" ] && { error "Search query required"; echo "Usage: pso discover search <query>"; exit 1; }
+                python3 -m core.service_discovery search "$3"
+                ;;
+            server)
+                python3 -m core.service_discovery server
+                ;;
+            *)
+                error "Unknown discover command: $2"
+                echo "Use: pso discover [list|info|sync|search|server]"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    # ── Tier / firewall ───────────────────────────────────────────────────────
+    tier)
+        case "$2" in
+            list)     python3 -m core.firewall_manager list ;;
+            status)
+                [ -z "$3" ] && { error "Service name required"; exit 1; }
+                python3 -m core.firewall_manager status "$3"
+                ;;
+            set)
+                [ -z "$3" ] || [ -z "$4" ] && { error "Usage: sudo pso tier set <service> <0-3>"; exit 1; }
+                sudo python3 -m core.firewall_manager set "$3" "$4"
+                ;;
+            history)
+                [ -z "$3" ] && { error "Service name required"; exit 1; }
+                python3 -m core.firewall_manager history "$3"
+                ;;
+            info)     python3 -m core.firewall_manager tiers ;;
+            *)
+                error "Unknown tier command: $2"
+                echo "Use: pso tier [list|status|set|history|info]"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    # ── Backup ────────────────────────────────────────────────────────────────
+    backup)
+        case "$2" in
+            create)
+                [ -z "$3" ] && { error "Service name required"; exit 1; }
+                # BUGFIX: save name BEFORE shifting, then use the saved variable
+                BACKUP_SERVICE="$3"
+                shift 3
+                NOTE=""
+                while [[ $# -gt 0 ]]; do
+                    case $1 in
+                        --note) NOTE="$2"; shift 2 ;;
+                        *) error "Unknown option: $1"; exit 1 ;;
+                    esac
+                done
+                python3 << EOF
+from core.backup_manager import BackupManager
+mgr = BackupManager()
+try:
+    backup_id = mgr.create_backup('$BACKUP_SERVICE', note='$NOTE')
+    print(f"Backup created: {backup_id}")
+except Exception as e:
+    print(f"Backup failed: {e}")
+    exit(1)
+EOF
+                ;;
+            restore)
+                [ -z "$3" ] || [ -z "$4" ] && { error "Usage: pso backup restore <service> <backup-id>"; exit 1; }
+                python3 -m core.backup_manager restore "$3" "$4"
+                ;;
+            list)
+                python3 -m core.backup_manager list ${3:-}
+                ;;
+            verify)
+                [ -z "$3" ] && { error "Backup ID required"; exit 1; }
+                python3 -m core.backup_manager verify "$3"
+                ;;
+            prune)
+                [ -z "$3" ] && { error "Service name required"; exit 1; }
+                KEEP="${4:-5}"
+                python3 -m core.backup_manager prune "$3" --keep "$KEEP"
+                ;;
+            *)
+                error "Unknown backup command: $2"
+                echo "Use: pso backup [create|restore|list|verify|prune]"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    # ── Update ────────────────────────────────────────────────────────────────
+    update)
+        case "$2" in
+            check)    python3 -m core.update_manager check ${3:-} ;;
+            apply)
+                [ -z "$3" ] && { error "Service name required"; exit 1; }
+                python3 -m core.update_manager update "$3"
+                ;;
+            history)  python3 -m core.update_manager history ${3:-} ;;
+            *)
+                error "Unknown update command: $2"
+                echo "Use: pso update [check|apply|history]"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    # ── Health ────────────────────────────────────────────────────────────────
+    health)
+        case "$2" in
+            status)   python3 -m core.health_monitor status ;;
+            check)
+                [ -z "$3" ] && { error "Service name required"; exit 1; }
+                python3 -m core.health_monitor check "$3"
+                ;;
+            history)
+                [ -z "$3" ] && { error "Service name required"; exit 1; }
+                python3 -m core.health_monitor history "$3"
+                ;;
+            start)    python3 -m core.health_monitor start ;;
+            *)
+                error "Unknown health command: $2"
+                echo "Use: pso health [status|check|history|start]"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    # ── Resources ─────────────────────────────────────────────────────────────
+    # ADDED: this block was completely missing -- that is why all resource
+    # commands failed with "Unknown command". Now routes to resource_manager.
+    resources)
+        case "$2" in
+            profiles|"")
+                python3 -m core.resource_manager profiles
+                ;;
+            get)
+                [ -z "$3" ] && { error "Service name required"; echo "Usage: pso resources get <service>"; exit 1; }
+                python3 -m core.resource_manager get "$3"
+                ;;
+            set)
+                [ -z "$3" ] && { error "Service name required"; echo "Usage: pso resources set <service> --profile <tiny|small|medium|large>"; exit 1; }
+                shift 2
+                python3 -m core.resource_manager set "$@"
+                ;;
+            apply)
+                [ -z "$3" ] && { error "Service name required"; exit 1; }
+                python3 -m core.resource_manager apply "$3"
+                ;;
+            stats)
+                [ -z "$3" ] && { error "Service name required"; echo "Usage: pso resources stats <service>"; exit 1; }
+                python3 -m core.resource_manager stats "$3"
+                ;;
+            *)
+                error "Unknown resources command: $2"
+                echo "Use: pso resources [profiles|get|set|apply|stats]"
+                echo "     pso resources set <service> --profile <tiny|small|medium|large>"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    # ── Log Aggregator ────────────────────────────────────────────────────────
+    logs-agg)
+        case "$2" in
+            show|"")
+                shift 2
+                python3 -m core.log_aggregator show "$@"
+                ;;
+            search)
+                [ -z "$3" ] && { error "Query required"; echo "Usage: pso logs-agg search <query> [service]"; exit 1; }
+                shift 2
+                python3 -m core.log_aggregator search "$@"
+                ;;
+            tail)
+                shift 2
+                python3 -m core.log_aggregator tail "$@"
+                ;;
+            collect) python3 -m core.log_aggregator collect ;;
+            stats)   python3 -m core.log_aggregator stats ;;
+            start)   python3 -m core.log_aggregator start ;;
+            *)
+                error "Unknown logs-agg command: $2"
+                echo "Use: pso logs-agg [show|search|tail|collect|stats|start]"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    # ── Notifications ─────────────────────────────────────────────────────────
+    notifications)
+        case "$2" in
+            status|"")  python3 -m core.notifications status ;;
+            test)
+                [ -z "$3" ] && { error "Channel required: email|webhook|desktop"; exit 1; }
+                python3 -m core.notifications test "$3"
+                ;;
+            config)
+                shift 2
+                python3 -m core.notifications config "$@"
+                ;;
+            history) python3 -m core.notifications history ;;
+            *)
+                error "Unknown notifications command: $2"
+                echo "Use: pso notifications [status|test|config|history]"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    # ── Grafana ───────────────────────────────────────────────────────────────
+    grafana)
+        case "$2" in
+            status|"")   python3 -m core.grafana_integration status ;;
+            provision)
+                shift 2
+                python3 -m core.grafana_integration provision "$@"
+                ;;
+            serve-metrics) python3 -m core.grafana_integration serve-metrics ;;
+            install)       python3 -m core.grafana_integration install ;;
+            *)
+                error "Unknown grafana command: $2"
+                echo "Use: pso grafana [status|provision|serve-metrics|install]"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    # ── Metrics ───────────────────────────────────────────────────────────────
+    # ADDED: this block was completely missing -- added here to route to metrics.
+    metrics)
+        case "$2" in
+            show|"")  python3 -m core.metrics show ;;
+            collect)  python3 -m core.metrics collect ;;
+            query)
+                [ -z "$3" ] && { error "Metric name required"; echo "Usage: pso metrics query <metric> [service]"; exit 1; }
+                python3 -m core.metrics query "$3" ${4:-}
+                ;;
+            export)   python3 -m core.metrics export ${3:-} ;;
+            start)    python3 -m core.metrics start ;;
+            *)
+                error "Unknown metrics command: $2"
+                echo "Use: pso metrics [collect|query|export|start]"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    # ── Users ─────────────────────────────────────────────────────────────────
+    user)
+        case "$2" in
+            list)     python3 -m core.auth list ;;
+            add)
+                [ -z "$3" ] || [ -z "$4" ] && { error "Usage: pso user add <username> <password>"; exit 1; }
+                python3 -m core.auth register "$3" "$4"
+                ;;
+            add-admin)
+                [ -z "$3" ] || [ -z "$4" ] && { error "Usage: pso user add-admin <username> <password>"; exit 1; }
+                python3 -m core.auth register "$3" "$4" --admin
+                ;;
+            cleanup)  python3 -m core.auth cleanup ;;
+            *)
+                error "Unknown user command: $2"
+                echo "Use: pso user [list|add|add-admin|cleanup]"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    # ── Ports ─────────────────────────────────────────────────────────────────
+    ports)
+        case "$2" in
+            "")         python3 -m core.port_manager ;;
+            available)  python3 -m core.port_manager available ;;
+            check)
+                [ -z "$3" ] && { error "Port number required"; exit 1; }
+                python3 -m core.port_manager check "$3"
+                ;;
+            *)
+                error "Unknown ports command: $2"
+                echo "Use: pso ports [available|check <port>]"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    # ── Dashboard ─────────────────────────────────────────────────────────────
+    dashboard)
+        PSO_PID_FILE="$HOME/.pso_dev/dashboard.pid"
+        case "$2" in
+            start)
+                info "Starting PSO dashboard..."
+                # Kill any existing instance first (PID file or live scan)
+                if [ -f "$PSO_PID_FILE" ]; then
+                    kill "$(cat "$PSO_PID_FILE")" 2>/dev/null || true
+                    rm -f "$PSO_PID_FILE"
+                fi
+                pkill -f "api.py" 2>/dev/null || true
+                PSO_LOG_FILE="$HOME/.pso_dev/dashboard.log"
+                mkdir -p "$HOME/.pso_dev"
+                cd web
+                nohup python3 api.py >"$PSO_LOG_FILE" 2>&1 &
+                echo $! > "$PSO_PID_FILE"
+                sleep 2
+                if pgrep -f "api.py" >/dev/null; then
+                    success "Dashboard started -- http://localhost:5000"
+                    info "Logs: $PSO_LOG_FILE"
+                else
+                    error "Failed to start dashboard -- check logs: $PSO_LOG_FILE"
+                    rm -f "$PSO_PID_FILE"
+                    exit 1
+                fi
+                ;;
+            stop)
+                STOPPED=0
+                # Try PID file first
+                if [ -f "$PSO_PID_FILE" ]; then
+                    PID=$(cat "$PSO_PID_FILE")
+                    if kill "$PID" 2>/dev/null; then
+                        STOPPED=1
+                    fi
+                    rm -f "$PSO_PID_FILE"
+                fi
+                # Always do a live scan as well to catch rogue processes
+                if pkill -f "api.py" 2>/dev/null; then
+                    STOPPED=1
+                fi
+                if [ "$STOPPED" -eq 1 ]; then
+                    success "Dashboard stopped"
+                else
+                    warn "Dashboard was not running"
+                fi
+                ;;
+            status)
+                # Live scan — works even after terminal restart or stale PID file
+                if pgrep -f "api.py" >/dev/null; then
+                    success "Dashboard running -- http://localhost:5000"
+                    info "Logs: $HOME/.pso_dev/dashboard.log"
+                    if [ -f "$PSO_PID_FILE" ]; then
+                        info "PID: $(cat "$PSO_PID_FILE")"
+                    else
+                        info "PID: $(pgrep -f 'api.py' | head -1) (no PID file — dashboard started outside PSO)"
+                    fi
+                else
+                    warn "Dashboard not running"
+                    # Clean up stale PID file if present
+                    rm -f "$PSO_PID_FILE"
+                    info "Start with: pso dashboard start"
+                fi
+                ;;
+            restart)
+                "$0" dashboard stop
+                sleep 1
+                "$0" dashboard start
+                ;;
+            secure)
+                PSO_CERT="$HOME/.pso_dev/dashboard.crt"
+                PSO_KEY="$HOME/.pso_dev/dashboard.key"
+                mkdir -p "$HOME/.pso_dev"
+
+                if [ -f "$PSO_CERT" ] && [ -f "$PSO_KEY" ]; then
+                    warn "Certificate already exists at $PSO_CERT"
+                    info "To regenerate: pso dashboard unsecure && pso dashboard secure"
+                    exit 0
+                fi
+
+                info "Generating self-signed certificate..."
+                if ! command -v openssl &>/dev/null; then
+                    error "openssl not found — install it with: sudo apt install openssl"
+                    exit 1
+                fi
+
+                openssl req -x509 -newkey rsa:4096 -sha256 -days 3650                     -nodes                     -keyout "$PSO_KEY"                     -out "$PSO_CERT"                     -subj "/CN=PSO Dashboard"                     -addext "subjectAltName=IP:127.0.0.1,IP:0.0.0.0,DNS:localhost"                     2>/dev/null
+
+                if [ $? -eq 0 ]; then
+                    success "Certificate generated (valid 10 years)"
+                    info "  Cert: $PSO_CERT"
+                    info "  Key:  $PSO_KEY"
+                    info "Restarting dashboard with HTTPS..."
+                    "$0" dashboard restart
+                    info "Dashboard now at: https://localhost:5000"
+                    warn "Your browser will warn about the self-signed cert — this is expected."
+                    warn "Add a security exception to proceed."
+                else
+                    error "Failed to generate certificate"
+                    rm -f "$PSO_CERT" "$PSO_KEY"
+                    exit 1
+                fi
+                ;;
+            unsecure)
+                PSO_CERT="$HOME/.pso_dev/dashboard.crt"
+                PSO_KEY="$HOME/.pso_dev/dashboard.key"
+
+                if [ ! -f "$PSO_CERT" ] && [ ! -f "$PSO_KEY" ]; then
+                    info "Dashboard is already running without HTTPS"
+                    exit 0
+                fi
+
+                info "Removing certificate..."
+                rm -f "$PSO_CERT" "$PSO_KEY"
+                success "Certificate removed"
+                info "Restarting dashboard without HTTPS..."
+                "$0" dashboard restart
+                info "Dashboard now at: http://localhost:5000"
+                ;;
+            logs)
+                PSO_LOG_FILE="$HOME/.pso_dev/dashboard.log"
+                if [ ! -f "$PSO_LOG_FILE" ]; then
+                    error "No dashboard log found at $PSO_LOG_FILE"
+                    info "Start the dashboard first: pso dashboard start"
+                    exit 1
+                fi
+                case "${3:-tail}" in
+                    follow|f|-f)
+                        info "Following dashboard logs (Ctrl+C to stop)..."
+                        tail -f "$PSO_LOG_FILE"
+                        ;;
+                    *)
+                        # Default: show last 50 lines
+                        tail -n "${3:-50}" "$PSO_LOG_FILE"
+                        ;;
+                esac
+                ;;
+            *)
+                error "Unknown dashboard command: $2"
+                echo "  Use: pso dashboard [start|stop|status|restart|logs|secure|unsecure]"
+                echo ""
+                echo "  pso dashboard logs             Show last 50 lines"
+                echo "  pso dashboard logs follow      Follow live (Ctrl+C to stop)"
+                echo "  pso dashboard logs <N>         Show last N lines"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    # ── Development / progress tracking ──────────────────────────────────────
+    dev)
+        case "$2" in
+            scan)
+                # init first so scan never fails on missing data file
+                python3 pso.py init 2>/dev/null | grep -v "^$" || true
+                python3 pso.py scan
+                ;;
+            tree|status|architecture)
+                python3 pso.py "$2"
+                ;;
+            complete)
+                [ -z "$3" ] && { error "Component ID required"; exit 1; }
+                python3 pso.py complete "$3"
+                ;;
+            *)
+                error "Unknown dev command: $2"
+                echo "Use: pso dev [scan|tree|status|architecture|complete]"
+                exit 1
+                ;;
+        esac
+        ;;
+
+    # ── Daemon install / uninstall ───────────────────────────────────────────
+    install-daemon)
+        PSO_DIR="$(cd "$(dirname "$0")" && pwd)"
+        PSO_SCRIPT="$PSO_DIR/pso"
+        PSO_LOG="$HOME/.pso_dev/dashboard.log"
+        OS_TYPE="$(uname -s)"
+
+        if [ "$OS_TYPE" = "Darwin" ]; then
+            # ── macOS: launchd user agent ─────────────────────────────────
+            PLIST_DIR="$HOME/Library/LaunchAgents"
+            PLIST_FILE="$PLIST_DIR/com.pso.dashboard.plist"
+            mkdir -p "$PLIST_DIR"
+
+            # Find Python
+            if [ -f "$PSO_DIR/.venv/bin/python3" ]; then
+                PYTHON="$PSO_DIR/.venv/bin/python3"
+            elif [ -f "$PSO_DIR/venv/bin/python3" ]; then
+                PYTHON="$PSO_DIR/venv/bin/python3"
+            else
+                PYTHON="$(command -v python3)"
+            fi
+
+            python3 "$PSO_DIR/scripts/generate_launchd_plist.py"                 --python "$PYTHON"                 --pso-dir "$PSO_DIR"                 --log "$PSO_LOG"                 --output "$PLIST_FILE"
+
+            if [ $? -ne 0 ]; then
+                error "Failed to generate launchd plist"
+                exit 1
+            fi
+
+            launchctl load -w "$PLIST_FILE" 2>/dev/null ||             launchctl bootstrap gui/"$(id -u)" "$PLIST_FILE" 2>/dev/null
+
+            if [ $? -eq 0 ]; then
+                success "PSO dashboard registered as launchd agent"
+                info "  Plist: $PLIST_FILE"
+                info "  Starts automatically on login"
+                info "  Logs: $PSO_LOG"
+                info "To start now: launchctl start com.pso.dashboard"
+            else
+                error "Failed to register launchd agent"
+                exit 1
+            fi
+
+        else
+            # ── Linux: systemd user service ───────────────────────────────
+            SYSTEMD_DIR="$HOME/.config/systemd/user"
+            SERVICE_FILE="$SYSTEMD_DIR/pso-dashboard.service"
+            mkdir -p "$SYSTEMD_DIR"
+
+            # Find Python
+            if [ -f "$PSO_DIR/.venv/bin/python3" ]; then
+                PYTHON="$PSO_DIR/.venv/bin/python3"
+            elif [ -f "$PSO_DIR/venv/bin/python3" ]; then
+                PYTHON="$PSO_DIR/venv/bin/python3"
+            else
+                PYTHON="$(command -v python3)"
+            fi
+
+            cat > "$SERVICE_FILE" << SYSTEMD_EOF
+[Unit]
+Description=PSO Dashboard
+Documentation=https://github.com/ApostolosTsampodimos/personal-server-os
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+WorkingDirectory=$PSO_DIR/web
+ExecStart=$PYTHON $PSO_DIR/web/api.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:$PSO_LOG
+StandardError=append:$PSO_LOG
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target
+SYSTEMD_EOF
+
+            systemctl --user daemon-reload
+            systemctl --user enable pso-dashboard.service
+            systemctl --user start pso-dashboard.service
+
+            if systemctl --user is-active --quiet pso-dashboard.service; then
+                success "PSO dashboard running as systemd user service"
+                info "  Unit: $SERVICE_FILE"
+                info "  Starts automatically on login"
+                info "  Logs: $PSO_LOG  (or: journalctl --user -u pso-dashboard)"
+                info "Commands:"
+                info "  systemctl --user status pso-dashboard"
+                info "  systemctl --user restart pso-dashboard"
+            else
+                error "Service installed but failed to start"
+                info "Check logs: journalctl --user -u pso-dashboard --no-pager -n 30"
+                exit 1
+            fi
+
+            # Enable lingering so service survives after logout
+            loginctl enable-linger "$USER" 2>/dev/null || true
+        fi
+        ;;
+
+    uninstall-daemon)
+        OS_TYPE="$(uname -s)"
+
+        if [ "$OS_TYPE" = "Darwin" ]; then
+            PLIST_FILE="$HOME/Library/LaunchAgents/com.pso.dashboard.plist"
+            if [ ! -f "$PLIST_FILE" ]; then
+                info "No launchd agent installed"
+                exit 0
+            fi
+            launchctl stop com.pso.dashboard 2>/dev/null || true
+            launchctl unload -w "$PLIST_FILE" 2>/dev/null ||             launchctl bootout gui/"$(id -u)" "$PLIST_FILE" 2>/dev/null || true
+            rm -f "$PLIST_FILE"
+            success "launchd agent removed"
+
+        else
+            SERVICE="pso-dashboard.service"
+            SERVICE_FILE="$HOME/.config/systemd/user/$SERVICE"
+            if [ ! -f "$SERVICE_FILE" ]; then
+                info "No systemd user service installed"
+                exit 0
+            fi
+            systemctl --user stop    "$SERVICE" 2>/dev/null || true
+            systemctl --user disable "$SERVICE" 2>/dev/null || true
+            rm -f "$SERVICE_FILE"
+            systemctl --user daemon-reload
+            success "systemd user service removed"
+        fi
+        ;;
+
+    # ── Pause / Resume (laptop workflow) ─────────────────────────────────────
+    pause)
+        info "Pausing PSO — stopping all services and dashboard..."
+        echo
+
+        # 1. Stop all running containers
+        CONTAINERS=$(docker ps --filter "name=pso-" --format "{{.Names}}" 2>/dev/null)
+        if [ -n "$CONTAINERS" ]; then
+            while IFS= read -r name; do
+                SERVICE_ID="${name#pso-}"
+                if docker stop "$name" >/dev/null 2>&1; then
+                    success "Stopped: $SERVICE_ID"
+                else
+                    error "Failed to stop: $SERVICE_ID"
+                fi
+            done <<< "$CONTAINERS"
+        else
+            info "No services were running"
+        fi
+
+        # 2. Stop the dashboard process
+        echo
+        STOPPED=0
+        if [ -f "$HOME/.pso_dev/dashboard.pid" ]; then
+            kill "$(cat "$HOME/.pso_dev/dashboard.pid")" 2>/dev/null && STOPPED=1
+            rm -f "$HOME/.pso_dev/dashboard.pid"
+        fi
+        pkill -f "api.py" 2>/dev/null && STOPPED=1
+        [ "$STOPPED" -eq 1 ] && success "Dashboard stopped" || info "Dashboard was not running"
+
+        echo
+        success "PSO paused. Run 'pso resume' when you're back."
+        ;;
+
+    resume)
+        info "Resuming PSO — starting dashboard and all services..."
+        echo
+
+        # 1. Start the dashboard
+        PSO_LOG_FILE="$HOME/.pso_dev/dashboard.log"
+        PSO_PID_FILE="$HOME/.pso_dev/dashboard.pid"
+        pkill -f "api.py" 2>/dev/null || true
+        rm -f "$PSO_PID_FILE"
+        mkdir -p "$HOME/.pso_dev"
+        cd web
+        nohup python3 api.py >"$PSO_LOG_FILE" 2>&1 &
+        echo $! > "$PSO_PID_FILE"
+        sleep 2
+        if pgrep -f "api.py" >/dev/null; then
+            success "Dashboard started — http://localhost:5000"
+        else
+            error "Dashboard failed to start — check: $PSO_LOG_FILE"
+        fi
+        cd "$SCRIPT_DIR"
+
+        # 2. Start all PSO containers
+        echo
+        CONTAINERS=$(docker ps -a --filter "name=pso-" --format "{{.Names}}" 2>/dev/null)
+        if [ -n "$CONTAINERS" ]; then
+            STARTED=0
+            SKIPPED=0
+            while IFS= read -r name; do
+                SERVICE_ID="${name#pso-}"
+                STATUS=$(docker inspect --format "{{.State.Status}}" "$name" 2>/dev/null)
+                if [ "$STATUS" = "running" ]; then
+                    info "Already running: $SERVICE_ID"
+                    SKIPPED=$((SKIPPED + 1))
+                elif docker start "$name" >/dev/null 2>&1; then
+                    success "Started: $SERVICE_ID"
+                    STARTED=$((STARTED + 1))
+                else
+                    error "Failed to start: $SERVICE_ID"
+                fi
+            done <<< "$CONTAINERS"
+            echo
+            [ $STARTED -gt 0 ]  && success "$STARTED service(s) started"
+            [ $SKIPPED -gt 0 ]  && info    "$SKIPPED already running"
+        else
+            info "No PSO services found to start"
+        fi
+
+        echo
+        success "PSO resumed. Dashboard at http://localhost:5000"
+        ;;
+
+    # ── Bulk service control ──────────────────────────────────────────────────
+    stop-all)
+        info "Stopping all PSO services..."
+        CONTAINERS=$(docker ps --filter "name=pso-" --format "{{.Names}}" 2>/dev/null)
+        if [ -z "$CONTAINERS" ]; then
+            warn "No PSO services are currently running"
+            exit 0
+        fi
+        COUNT=0
+        while IFS= read -r name; do
+            SERVICE_ID="${name#pso-}"
+            if docker stop "$name" >/dev/null 2>&1; then
+                success "Stopped: $SERVICE_ID"
+                COUNT=$((COUNT + 1))
+            else
+                error "Failed to stop: $SERVICE_ID"
+            fi
+        done <<< "$CONTAINERS"
+        echo
+        success "$COUNT service(s) stopped"
+        info "To start them again: pso start-all"
+        ;;
+
+    start-all)
+        info "Starting all installed PSO services..."
+        CONTAINERS=$(docker ps -a --filter "name=pso-" --format "{{.Names}}" 2>/dev/null)
+        if [ -z "$CONTAINERS" ]; then
+            warn "No PSO services found"
+            info "Install a service first: pso catalog"
+            exit 0
+        fi
+        STARTED=0
+        SKIPPED=0
+        FAILED=0
+        while IFS= read -r name; do
+            SERVICE_ID="${name#pso-}"
+            STATUS=$(docker inspect --format "{{.State.Status}}" "$name" 2>/dev/null)
+            if [ "$STATUS" = "running" ]; then
+                info "Already running: $SERVICE_ID"
+                SKIPPED=$((SKIPPED + 1))
+            elif docker start "$name" >/dev/null 2>&1; then
+                success "Started: $SERVICE_ID"
+                STARTED=$((STARTED + 1))
+            else
+                error "Failed to start: $SERVICE_ID"
+                FAILED=$((FAILED + 1))
+            fi
+        done <<< "$CONTAINERS"
+        echo
+        [ $STARTED -gt 0 ]  && success "$STARTED service(s) started"
+        [ $SKIPPED -gt 0 ]  && info    "$SKIPPED already running"
+        [ $FAILED -gt 0 ]   && error   "$FAILED failed to start"
+        ;;
+
+    # NOTE: 'docs' command removed -- it was a redundant alias for pso-menu.
+    # Run pso-menu directly.
+
+    *)
+        error "Unknown command: $1"
+        echo
+        echo "  pso help          Show all commands"
+        echo "  pso catalog       Browse available services"
+        echo "  pso-menu          Interactive menu"
+        echo
+        exit 1
+        ;;
+
+esac

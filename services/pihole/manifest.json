@@ -1,0 +1,107 @@
+{
+  "id": "pihole",
+  "name": "Pi-hole",
+  "version": "2024.07.0",
+  "category": "networking",
+  "description": "Network-wide ad blocker that acts as a DNS sinkhole",
+  "author": "PSO Community",
+  "homepage": "https://pi-hole.net",
+  "documentation": "https://docs.pi-hole.net",
+  "installation": {
+    "method": "docker",
+    "image": "pihole/pihole:2024.07.0",
+    "container_port": 80,
+    "port_mappings": {
+      "web": 80,
+      "dns": 53
+    }
+  },
+  "dependencies": {
+    "services": [],
+    "system": [
+      "docker"
+    ],
+    "conflicts": []
+  },
+  "ports": {
+    "web": 8400,
+    "dns": 53
+  },
+  "volumes": [
+    {
+      "host": "/var/pso/pihole/etc",
+      "container": "/etc/pihole",
+      "type": "bind",
+      "readonly": false
+    },
+    {
+      "host": "/var/pso/pihole/dnsmasq",
+      "container": "/etc/dnsmasq.d",
+      "type": "bind",
+      "readonly": false
+    }
+  ],
+  "environment": {
+    "TZ": "UTC",
+    "WEBPASSWORD": "__generate:hex_16__",
+    "FTLCONF_LOCAL_IPV4": "0.0.0.0"
+  },
+  "configuration": {
+    "user_inputs": []
+  },
+  "health_check": {
+    "type": "command",
+    "command": "wget -qO/dev/null http://localhost:80/admin || exit 1",
+    "interval": 30,
+    "timeout": 10,
+    "retries": 5,
+    "start_period": 30
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": "echo 'Set WEBPASSWORD environment variable for admin panel access'",
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": null
+  },
+  "reverse_proxy": {
+    "enabled": true,
+    "subdomain": "pihole",
+    "port": 8400,
+    "path": "/admin",
+    "ssl": true
+  },
+  "resources": {
+    "cpu_limit": "0.5",
+    "memory_limit": "512M"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "/var/pso/pihole/etc"
+    ],
+    "schedule": "0 2 * * *",
+    "retention": 14
+  },
+  "metadata": {
+    "tags": [
+      "dns",
+      "ad-blocker",
+      "network",
+      "privacy",
+      "security"
+    ],
+    "icon": "https://wp-cdn.pi-hole.net/wp-content/uploads/2016/12/Vortex-R.png",
+    "license": "EUPL-1.2",
+    "notes": [
+      "Requires privileged mode or NET_ADMIN capability",
+      "Set WEBPASSWORD for admin panel",
+      "Configure your router to use this as DNS server"
+    ],
+    "github_repo": "https://github.com/pi-hole/pi-hole",
+    "website": "https://pi-hole.net"
+  }
+}

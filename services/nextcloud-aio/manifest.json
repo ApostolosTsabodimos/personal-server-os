@@ -1,0 +1,113 @@
+{
+  "id": "nextcloud-aio",
+  "name": "Nextcloud AIO",
+  "version": "8.0.0",
+  "category": "productivity",
+  "description": "All-in-One Nextcloud installation with automatic updates and easy management",
+  "author": "PSO Community",
+  "homepage": "https://nextcloud.com",
+  "documentation": "https://github.com/nextcloud/all-in-one",
+  "installation": {
+    "method": "docker",
+    "image": "nextcloud/all-in-one:latest",
+    "container_port": 80,
+    "port_mappings": {
+      "admin": 80,
+      "apache": 11000
+    }
+  },
+  "dependencies": {
+    "services": [],
+    "system": [
+      "docker"
+    ],
+    "conflicts": []
+  },
+  "ports": {
+    "admin": 8090,
+    "apache": 11000
+  },
+  "volumes": [
+    {
+      "host": "/var/pso/nextcloud-aio",
+      "container": "/mnt/docker-aio-config",
+      "type": "bind",
+      "readonly": false
+    },
+    {
+      "host": "/var/run/docker.sock",
+      "container": "/var/run/docker.sock",
+      "type": "bind",
+      "readonly": false
+    }
+  ],
+  "environment": {
+    "APACHE_PORT": "11000",
+    "APACHE_IP_BINDING": "0.0.0.0",
+    "SKIP_DOMAIN_VALIDATION": "false",
+    "NEXTCLOUD_DATADIR": "/var/pso/nextcloud-aio/data"
+  },
+  "configuration": {
+    "user_inputs": []
+  },
+  "health_check": {
+    "type": "command",
+    "command": "wget -qO/dev/null http://localhost:80 || exit 1",
+    "interval": 30,
+    "timeout": 10,
+    "retries": 5,
+    "start_period": 60
+  },
+  "hooks": {
+    "pre_install": null,
+    "post_install": "echo 'Access Nextcloud AIO admin interface at http://localhost:8090'",
+    "pre_start": null,
+    "post_start": null,
+    "pre_stop": null,
+    "post_stop": null,
+    "pre_uninstall": null,
+    "post_uninstall": null
+  },
+  "reverse_proxy": {
+    "enabled": true,
+    "subdomain": "nextcloud",
+    "port": 11000,
+    "path": "/",
+    "ssl": true
+  },
+  "resources": {
+    "cpu_limit": "4.0",
+    "memory_limit": "4G"
+  },
+  "backup": {
+    "enabled": true,
+    "paths": [
+      "/var/pso/nextcloud-aio"
+    ],
+    "schedule": "0 2 * * *",
+    "retention": 30
+  },
+  "metadata": {
+    "tags": [
+      "cloud",
+      "storage",
+      "collaboration",
+      "file-sharing",
+      "nextcloud",
+      "productivity"
+    ],
+    "icon": "https://nextcloud.com/wp-content/themes/next/assets/img/common/favicon.png",
+    "license": "AGPL-3.0",
+    "screenshots": [],
+    "notes": [
+      "Nextcloud AIO is a complete solution that manages multiple containers",
+      "Admin interface runs on port 8090",
+      "Nextcloud itself runs on port 11000 (HTTP/HTTPS)",
+      "Requires access to Docker socket",
+      "Initial setup wizard runs on first access",
+      "Recommended: 4GB RAM minimum"
+    ],
+    "github_repo": "https://github.com/nextcloud/all-in-one",
+    "website": "https://nextcloud.com"
+  }
+}
