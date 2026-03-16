@@ -11,13 +11,13 @@
 PSO is a **complete service management platform** that makes self-hosting easy and secure. Install services with a single command, manage them through a beautiful dashboard, and control access with a tier-based security system.
 
 **Core Features:**
-- ✅ **One-command installation** - `./pso install jellyfin`
-- ✅ **Tier-based security** - Services default to localhost-only
-- ✅ **Beautiful dashboard** - React UI with real-time updates
-- ✅ **Health monitoring** - Auto-restart failed services
-- ✅ **Backup/restore** - One-click backups with integrity checks
-- ✅ **Update manager** - Check and apply updates safely
-- ✅ **21 services ready** - Media, productivity, security, more
+- **One-command installation** - `./pso install jellyfin`
+- **Tier-based security** - Services default to localhost-only
+- **Beautiful dashboard** - React UI with real-time updates
+- **Health monitoring** - Auto-restart failed services
+- **Backup/restore** - One-click backups with integrity checks
+- **Update manager** - Check and apply updates safely
+- **21 services ready** - Media, productivity, security, more
 
 ---
 
@@ -287,7 +287,7 @@ sudo python -m core.firewall_manager set homeassistant 1
 
 ---
 
-## System Requirements
+## System Requirements (Definitely Eyeballing it)
 
 **Minimum:**
 - Linux (Manjaro, Arch, Ubuntu, Debian)
@@ -303,7 +303,7 @@ sudo python -m core.firewall_manager set homeassistant 1
 
 ---
 
-## Project Status
+## Prototype Status
 
 **Progress:** 55% 
 
@@ -359,7 +359,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for complete design.
 
 ## Contributing
 
-PSO is designed to be extensible:
+The goal is to design PSO to be extensible:
 
 **Add a new service:**
 1. Create `services/<service>/manifest.json`

@@ -46,6 +46,7 @@
 - [ ] **1.31** Security best practices guide
 - [ ] **1.32** Troubleshooting guide
 - [ ] **1.33** Backup/restore procedures
+- [ ] **1.34** NOTICE file with third-party licenses and attributions
 
 ---
 
