@@ -795,9 +795,9 @@ Services are localhost-only by default. To access remotely:
    ```
 
 2. **Reverse Proxy** (Advanced):
-   - Install Nginx service
+   - Install Caddy or Nginx service
    - Configure domain and SSL
-   - See [SETUP_GUIDES.md](SETUP_GUIDES.md) for details
+   - See [Reverse Proxy Setup](#reverse-proxy-setup) for details
 
 ### Can I change service ports?
 

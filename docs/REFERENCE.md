@@ -1,6 +1,6 @@
 # PSO Reference Guide
 
-Complete command reference and technical documentation.
+Complete command reference (I think) and technical documentation.
 
 ---
 
@@ -558,10 +558,10 @@ personal-server-os/
 │   └── pso-health-monitor.service
 │
 └── docs/                        # Documentation
-    ├── PROJECT_STATUS.md
-    ├── QUICKSTART.md
-    ├── SETUP_GUIDES.md
-    └── REFERENCE.md
+    ├── INSTALL.md
+    ├── USER_GUIDE.md
+    ├── REFERENCE.md
+    └── ARCHITECTURE.md
 ```
 
 ---
@@ -610,7 +610,7 @@ Set in service manifest `environment` section:
 
 ---
 
-## Security Tiers
+## Security Tiers and Onions
 
 | Tier | Name | Binding | Access | Risk |
 |------|------|---------|--------|------|
@@ -678,7 +678,3 @@ jsonschema
 
 ~/personal-server-os/            # Project directory
 ```
-
----
-
-**Complete technical reference for PSO.**

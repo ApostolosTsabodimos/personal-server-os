@@ -585,7 +585,7 @@ After installation:
 1. **Read the User Guide**: [USER_GUIDE.md](USER_GUIDE.md)
 2. **Explore Services**: Browse the service catalog
 3. **Configure Backups**: Set up automated backups
-4. **Harden Security**: Review [SETUP_GUIDES.md](SETUP_GUIDES.md#security-hardening)
+4. **Harden Security**: Review [Security Settings](USER_GUIDE.md#security-settings) and [Firewall & Tiers](USER_GUIDE.md#firewall--network-tiers)
 5. **Join Community**: When we set it up (lol)
 
 ---

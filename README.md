@@ -294,7 +294,7 @@ PSO is built on top of open-source projects:
 
 ### Development Tools
 
-This project was developed with assistance from **Claude** (Anthropic) for:
+This project is being developed with assistance from **Claude** (Anthropic) for:
 - Architecture design and code structure
 - Documentation writing and organization
 - Security best practices implementation

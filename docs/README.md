@@ -65,7 +65,7 @@ python api.py
 
 ---
 
-## Security Tiers
+## Security Tiers - The way of the onion
 
 PSO uses a **4-tier security model** to prevent accidental exposure:
 
@@ -140,18 +140,12 @@ homeassistant, zigbee2mqtt, mosquitto
 ## Documentation
 
 ### Getting Started
-- **[QUICKSTART.md](QUICKSTART.md)** - Get running in 15 minutes
-- **[PROJECT_STATUS.md](PROJECT_STATUS.md)** - Current state and progress
+- **[INSTALL.md](INSTALL.md)** - Complete installation guide
+- **[USER_GUIDE.md](USER_GUIDE.md)** - How to use PSO
 
-### Guides
-- **[SETUP_GUIDES.md](SETUP_GUIDES.md)** - Complete setup for all features
-  - Authentication
-  - Firewall & Tiers
-  - Health Monitoring
-  - Backup System
-  - Update Manager
-  - Reverse Proxy
-  - Rate Limiting
+### Reference
+- **[REFERENCE.md](REFERENCE.md)** - CLI commands, API, technical details
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - System design and architecture
   - Notifications
 
 ### Reference
@@ -311,25 +305,25 @@ sudo python -m core.firewall_manager set homeassistant 1
 
 ## Project Status
 
-**Progress:** 55% (18-19 of 33 components complete)
+**Progress:** 55% 
 
 **Complete:**
-- ✅ Core system (installation, management, database)
-- ✅ Dashboard (React UI with authentication)
-- ✅ Security (tiers, firewall, rate limiting)
-- ✅ Monitoring (health checks, notifications)
-- ✅ Backup/restore system
-- ✅ Update manager
+- Core system (installation, management, database)
+- Dashboard (React UI with authentication)
+- Security (tiers, firewall, rate limiting)
+- Monitoring (health checks, notifications)
+- Backup/restore system
+- Update manager
 
 **In Progress:**
-- ⏳ Reverse proxy (coded, needs testing)
-- ⏳ Metrics collection
-- ⏳ RBAC system
+- Reverse proxy (coded, needs testing)
+- Metrics collection
+- RBAC system
 
 **Planned:**
-- 📋 AI assistant
-- 📋 Mobile app
-- 📋 Cloud backup
+- AI assistant
+- Mobile app
+- Cloud backup
 
 See [PROJECT_STATUS.md](PROJECT_STATUS.md) for details.
 
@@ -403,7 +397,7 @@ sudo fuser -k <port>/tcp  # Free port
 python3 -c "from core.database import Database; Database()"
 ```
 
-See [QUICKSTART.md](QUICKSTART.md) for more.
+See [INSTALL.md](INSTALL.md) for complete installation instructions.
 
 ---
 
@@ -412,7 +406,7 @@ See [QUICKSTART.md](QUICKSTART.md) for more.
 **Default credentials:**
 - Username: `admin`
 - Password: `pso-admin-2026`
-- **⚠️ CHANGE IMMEDIATELY**
+- **CHANGE IMMEDIATELY**
 
 **Security checklist:**
 - [ ] Change default password
@@ -435,9 +429,8 @@ personal-server-os/
 ├── services/          # Service manifests (21 services)
 ├── systemd/           # Service files
 └── docs/              # Documentation
-    ├── QUICKSTART.md
-    ├── PROJECT_STATUS.md
-    ├── SETUP_GUIDES.md
+    ├── INSTALL.md
+    ├── USER_GUIDE.md
     ├── REFERENCE.md
     └── ARCHITECTURE.md
 ```
@@ -453,11 +446,3 @@ personal-server-os/
 ## Links
 
 - **Documentation:** See docs/ folder
-- **Issues:** [Your issue tracker]
-- **Discussions:** [Your discussions]
-
----
-
-**Built with ❤️ for the self-hosting community**
-
-PSO makes self-hosting accessible to everyone while keeping security front and center.

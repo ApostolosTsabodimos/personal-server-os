@@ -1,18 +1,18 @@
 # PSO Architecture
 
-Complete system architecture and design documentation.
+System architecture and design documentation.
 
 ---
 
 ## Overview
 
-PSO (Personal Server OS) is a **tier-based service management platform** that makes self-hosting secure by default while allowing controlled access when needed.
+PSO (Personal Server OS) is a **tier-based service management platform - The way of the onion** that makes self-hosting secure by default while allowing controlled access when needed.
 
 **Core Principle:** "Secure by Default, Explicit by Choice"
 
 ---
 
-## System Architecture
+## Current System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -74,7 +74,7 @@ PSO (Personal Server OS) is a **tier-based service management platform** that ma
 Service Installation
        │
        ▼
-Default: Tier 0 (127.0.0.1) ◄─── MOST SECURE
+Default: Tier 0 (127.0.0.1) ◄─── MOST SECURE?
        │
        ▼ User promotes tier
        │
@@ -169,22 +169,22 @@ iptables -A PSO_web_80 -j ACCEPT
 │    Health    │              │  Tier-Based  │
 │  Monitoring  │              │   Access     │
 └──────┬───────┘              └──────┬───────┘
-       │                              │
-       │ health_monitor.py            │ firewall_manager.py
-       │ - HTTP/TCP checks            │ - iptables rules
-       │ - Auto-restart               │ - Port binding
-       │ - Uptime tracking            │ - Audit logging
-       │                              │
-       ▼                              ▼
+       │                             │
+       │ health_monitor.py           │ firewall_manager.py
+       │ - HTTP/TCP checks           │ - iptables rules
+       │ - Auto-restart              │ - Port binding
+       │ - Uptime tracking           │ - Audit logging
+       │                             │
+       ▼                             ▼
 ┌──────────────┐              ┌──────────────┐
 │  Backups &   │              │   Reverse    │
 │   Updates    │              │    Proxy     │
 └──────┬───────┘              └──────┬───────┘
-       │                              │
-       │ backup_manager.py            │ reverse_proxy.py
-       │ update_manager.py            │ - Caddy config
-       │                              │ - SSL/TLS
-       │                              │ - Subdomain routing
+       │                             │
+       │ backup_manager.py           │ reverse_proxy.py
+       │ update_manager.py           │ - Caddy config
+       │                             │ - SSL/TLS
+       │                             │ - Subdomain routing
        ▼
 ┌──────────────┐
 │ Uninstall    │  installer.py
@@ -241,8 +241,8 @@ iptables -A PSO_web_80 -j ACCEPT
        │
        │ 1:N
        │
-  ┌────▼────────────┬──────────────┐
-  │                 │              │
+  ┌────▼────────────┬─────────────┐
+  │                 │             │
 ┌─▼────────┐  ┌─────▼────────┐  ┌─▼─────────┐
 │health_   │  │uptime_       │  │           │
 │checks    │  │tracking      │  │           │
@@ -295,7 +295,7 @@ Health Monitor
        │ Registers for checks
        │ Starts monitoring
        ▼
-Success ✓
+Done 
 ```
 
 ### Tier Change Flow
@@ -326,7 +326,7 @@ Notification
        │ Desktop popup
        │ "Tier changed to LAN"
        ▼
-Success ✓
+Done
 ```
 
 ### Health Check Flow
@@ -457,7 +457,7 @@ Browser
 
 ---
 
-## Security Design
+## Security Design - The way of the onion
 
 ### Defense in Depth
 
@@ -508,7 +508,7 @@ Browser
 - PostgreSQL instead of SQLite
 - Distributed health monitoring
 - Service orchestration (Kubernetes)
-- Centralized logging
+- Centralized logging?
 
 **High Availability:**
 - Load balancer
@@ -600,5 +600,3 @@ Browser
 - Update API docs
 
 ---
-
-**This architecture supports the core principle: Secure by Default, Explicit by Choice.**
