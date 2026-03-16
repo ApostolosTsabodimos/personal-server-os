@@ -291,3 +291,13 @@ PSO is built on top of open-source projects:
 - **React** - UI library
 - **SQLite** - Database
 - All the service developers (Jellyfin, Nextcloud, Pi-hole, etc.)
+
+### Development Tools
+
+This project was developed with assistance from **Claude** (Anthropic) for:
+- Architecture design and code structure
+- Documentation writing and organization
+- Security best practices implementation
+- Code review and optimization
+
+The core concepts, design decisions, and project vision are entirely original.
