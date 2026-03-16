@@ -99,6 +99,7 @@ GITHUB_READINESS.md
 SECURITY_AUDIT_REPORT.md
 docs/HANDOFF.md
 docs/PROJECT_STATUS.md
+docs/QUICKSTART.md
 
 # Development/test scripts (not for public)
 fix_manifests.py

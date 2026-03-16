@@ -40,17 +40,17 @@ Complete installation instructions for PSO (Personal Server OS)
 
 ### Supported Platforms
 
-✅ **Tested & Supported**:
+**Tested & Supported**:
 - Arch Linux / Manjaro
 - Ubuntu 22.04 LTS
 
-⚠️ **Should Work** (untested):
+**Should Work** (untested):
 - Debian 11/12
 - Fedora 35+
 - CentOS Stream 9
 - Other systemd-based Linux distributions
 
-❌ **Not Supported**:
+**I have no idea**:
 - Windows (WSL2 might work but untested)
 - macOS (Docker Desktop required, untested)
 - Raspberry Pi OS (32-bit)
@@ -137,7 +137,7 @@ sudo apt update
 sudo apt install python3.10 python3.10-venv python3-pip
 ```
 
-### 4. Install Git
+### 4. Install Git If You Haven't
 
 ```bash
 # Arch/Manjaro
@@ -201,7 +201,7 @@ python3 -m core.auth register admin adminpassword --admin
 
 ### Method 3: Development Install
 
-For developers who want to contribute:
+For whoever wants to contribute:
 
 ```bash
 # 1. Clone your fork
@@ -239,7 +239,7 @@ Default credentials:
 - **Username**: `admin`
 - **Password**: `admin`
 
-**⚠️ IMPORTANT**: Change the default password immediately!
+**IMPORTANT**: Change the default password immediately!
 
 ```bash
 # Change password via CLI
@@ -251,7 +251,7 @@ Or change it through the web dashboard:
 2. Select "Change Password"
 3. Enter new password
 
-### 3. Install Your First Service
+### 3. Install Your First Service (If I manage to get it to work)
 
 #### Via Web Dashboard
 1. Go to Services tab
@@ -279,7 +279,57 @@ Or change it through the web dashboard:
 # Open browser to http://localhost:8096 (or check service port)
 ```
 
-### 4. Configure System Settings
+### 4. Understanding Security Tiers (The Way of the Onion)
+
+Every service in PSO has a security tier that controls network access. Think of it like layers of an onion - each layer adds more exposure but also more convenience.
+
+**Tier 0 - Internal Only (DEFAULT)** 🟢
+- Accessible only from localhost
+- Most secure, use this by default
+- Access via SSH tunnel: `ssh -L 8080:localhost:8080 your-server`
+- Example: Databases, password managers, internal tools
+
+**Tier 1 - LAN Only** 🟡
+- Accessible from your home network
+- Good for family services
+- Your phone/laptop on home WiFi can access
+- Example: Jellyfin (media), Nextcloud (files), Home Assistant
+
+**Tier 2 - VPN Access** 🔵
+- Accessible via VPN (Tailscale/WireGuard)
+- Remote access while traveling
+- Still secured behind VPN authentication
+- Example: All services when you're away from home
+
+**Tier 3 - Internet Exposed** 🔴
+- PUBLIC internet access
+- Use ONLY when absolutely necessary
+- Requires explicit confirmation
+- Should have additional authentication
+- Example: Public blog, webhook endpoints, public API
+
+**Changing Tiers:**
+
+```bash
+# Check current tier
+python -m core.firewall_manager status jellyfin
+
+# Promote to LAN access (for family)
+sudo python -m core.firewall_manager set jellyfin 1
+./pso restart jellyfin
+
+# Promote to VPN access (when traveling)
+sudo python -m core.firewall_manager set vaultwarden 2
+./pso restart vaultwarden
+```
+
+**Best Practices:**
+- Start everything at Tier 0 (default)
+- Only promote to higher tiers when needed
+- Keep sensitive services (passwords, admin panels) at Tier 0 or 2
+- Use Tier 3 sparingly and only with strong authentication
+
+### 5. Configure System Settings
 
 ```bash
 # View current configuration
@@ -295,7 +345,7 @@ Or change it through the web dashboard:
 ./pso config set updates.auto_check true
 ```
 
-### 5. Enable Automatic Startup (Optional)
+### 6. Enable Automatic Startup (Optional)
 
 To start PSO automatically on boot:
 
@@ -536,7 +586,7 @@ After installation:
 2. **Explore Services**: Browse the service catalog
 3. **Configure Backups**: Set up automated backups
 4. **Harden Security**: Review [SETUP_GUIDES.md](SETUP_GUIDES.md#security-hardening)
-5. **Join Community**: GitHub Discussions and Issues
+5. **Join Community**: When we set it up (lol)
 
 ---
 
@@ -544,6 +594,4 @@ After installation:
 
 - **Documentation**: [docs/](../)
 - **FAQ**: [USER_GUIDE.md](USER_GUIDE.md#faq)
-- **Issues**: [GitHub Issues](https://github.com/ApostolosTsampodimos/personal-server-os/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/ApostolosTsampodimos/personal-server-os/discussions)
 
