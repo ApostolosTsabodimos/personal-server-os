@@ -3161,3 +3161,12 @@ body {
     width: 100%;
     height: 100%;
 }
+/* GitHub icon spinning animation */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
