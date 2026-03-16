@@ -97,3 +97,9 @@ CHECKLIST.md
 GITHUB_CHECKLIST.md
 GITHUB_READINESS.md
 SECURITY_AUDIT_REPORT.md
+docs/HANDOFF.md
+docs/PROJECT_STATUS.md
+
+# Development/test scripts (not for public)
+fix_manifests.py
+test_uninstall_cleanup.py
