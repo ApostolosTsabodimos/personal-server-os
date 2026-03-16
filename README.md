@@ -2,8 +2,6 @@
 
 > **Self-hosted service management platform with one-click Docker deployments**
 
-PSO (Personal Server OS) is a lightweight, secure platform for managing self-hosted services on your personal server. Deploy and manage Docker-based services like Jellyfin, Nextcloud, Pi-hole, and more through an intuitive web dashboard.
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
@@ -12,7 +10,7 @@ PSO (Personal Server OS) is a lightweight, secure platform for managing self-hos
 
 ## Features
 
-- One-click service deployment from web dashboard
+- Service deployment from web dashboard
 - Docker-based containerization for all services
 - JWT authentication with encrypted secrets storage
 - Resource monitoring (CPU, RAM, disk, network)
@@ -24,7 +22,7 @@ PSO (Personal Server OS) is a lightweight, secure platform for managing self-hos
 
 ---
 
-## Supported Services
+## Currently Supported Services
 
 **Media & Entertainment**
 - Jellyfin (Media Server)
@@ -163,13 +161,13 @@ PSO implements multiple security layers:
 - **No Root Required**: Runs entirely in user space
 - **Regular Updates**: Security patches and dependency updates
 
-**Default Security Posture**:
+**Default Security**:
 - All services bind to `127.0.0.1` (localhost only)
 - No external network access by default
 - Secrets stored encrypted on disk
 - Password hashing with bcrypt
 
-For production deployments, see [Security Best Practices](docs/SETUP_GUIDES.md#security-hardening)
+See [Security Practices](docs/SETUP_GUIDES.md#security-hardening)
 
 ---
 
@@ -227,27 +225,15 @@ See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed design.
 - Cross-platform testing
 
 **Planned** 
-- Local AI integration (Ollama)
+- Local AI integration (Ollama?)
 - Multi-server federation
 - Vite build system migration
 - Mobile app
 - Plugin system
 
-See [ROADMAP.md](ROADMAP.md) for complete development timeline.
+See [ROADMAP.md](ROADMAP.md) for development timeline.
 
 ---
-
-## Contributing
-
-We welcome contributions! Here's how to get started:
-
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
-
-Please read [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
 
 ### Development Setup
 
@@ -271,8 +257,6 @@ pip install -r requirements-dev.txt
 ## Project Stats
 
 - **Services**: 20+ pre-configured
-- **Lines of Code**: ~15,000
-- **Test Coverage**: Core components tested
 - **Active Development**: Yes
 - **Status**: Prototype (v0.1.0)
 

@@ -90,3 +90,10 @@ backups/
 # Claude Code specific
 .claude/
 what i had originally/
+
+# Internal/Development documentation (not for GitHub)
+FILES_TO_COMMIT.md
+CHECKLIST.md
+GITHUB_CHECKLIST.md
+GITHUB_READINESS.md
+SECURITY_AUDIT_REPORT.md
