@@ -13,9 +13,10 @@ Complete guide to using PSO (Personal Server OS)
 5. [Backups & Recovery](#backups--recovery)
 6. [User Management](#user-management)
 7. [Security Settings](#security-settings)
-8. [CLI Reference](#cli-reference)
-9. [FAQ](#faq)
-10. [Troubleshooting](#troubleshooting)
+8. [Firewall & Network Tiers](#firewall--network-tiers)
+9. [Advanced Features](#advanced-features)
+10. [FAQ](#faq)
+11. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -277,6 +278,40 @@ Services automatically health-checked every 30 seconds.
 - 🔴 **Unhealthy**: Service not responding
 - ⚪ **Unknown**: Health check not configured
 
+**Manual health checks:**
+```bash
+python -m core.health_monitor check <service>
+python -m core.health_monitor status
+python -m core.health_monitor history <service>
+```
+
+**Run as systemd service (optional):**
+```bash
+# Copy service file
+sudo cp pso-health-monitor.service /etc/systemd/system/
+
+# Edit to set correct paths
+sudo nano /etc/systemd/system/pso-health-monitor.service
+
+# Enable and start
+sudo systemctl enable pso-health-monitor
+sudo systemctl start pso-health-monitor
+
+# Check status
+sudo systemctl status pso-health-monitor
+```
+
+**Configure health checks in service manifests:**
+```json
+"health_check": {
+  "type": "http",
+  "endpoint": "http://localhost:8080/health",
+  "interval": 30,
+  "timeout": 5,
+  "retries": 3
+}
+```
+
 ---
 
 ## Backups & Recovery
@@ -316,7 +351,7 @@ PSO automatically backs up:
 
 ### Restoring from Backup
 
-⚠️ **Warning**: This overwrites current service data!
+**Warning**: This overwrites current service data!
 
 #### Via Dashboard
 1. Stop the service first
@@ -368,9 +403,51 @@ Backups stored in:
       └── database_2026-03-15_02-00-00.db
 ```
 
+### Backup Verification & Pruning
+
+**Verify backup integrity:**
+```bash
+./pso backup verify <backup-id>
+```
+
+**View backup info:**
+```bash
+./pso backup info <backup-id>
+```
+
+**Prune old backups:**
+```bash
+# Keep only latest 7 backups
+./pso backup prune <service> --keep 7
+
+# Delete backups older than 30 days
+./pso backup cleanup --older-than 30
+```
+
+### Scheduled Backups with Cron
+
+```bash
+crontab -e
+
+# Add daily backups at 2 AM
+0 2 * * * cd ~/personal-server-os && ./pso backup create nginx
+0 2 * * * cd ~/personal-server-os && ./pso backup create jellyfin
+
+# Weekly pruning on Sunday at 3 AM
+0 3 * * 0 cd ~/personal-server-os && ./pso backup prune nginx --keep 7
+```
+
 ---
 
 ## User Management
+
+### Login & Sessions
+
+**Access dashboard:** http://localhost:5000/login
+
+**Session Duration:**
+- Regular login: 24 hours
+- "Remember me" enabled: 30 days
 
 ### Creating Users
 
@@ -412,6 +489,16 @@ Backups stored in:
 ./pso auth delete alice
 
 # Cannot delete last admin user
+```
+
+### Session Management
+
+```bash
+# List active sessions
+python -m core.auth list
+
+# Remove expired sessions
+python -m core.auth cleanup
 ```
 
 ### Roles & Permissions
@@ -471,6 +558,7 @@ For production, use a proper certificate:
 
 ### Rate Limiting
 
+**Enable/Configure:**
 ```bash
 # Enable rate limiting
 ./pso config set security.rate_limit.enabled true
@@ -481,6 +569,39 @@ For production, use a proper certificate:
 # Ban duration (minutes)
 ./pso config set security.rate_limit.ban_duration 15
 ```
+
+**Manage IP lists:**
+```bash
+# Blacklist IP
+python -m core.rate_limiter blacklist 1.2.3.4 --reason "Brute force attack"
+
+# Whitelist IP
+python -m core.rate_limiter whitelist 192.168.1.100 --reason "My home IP"
+
+# View lists
+python -m core.rate_limiter list-blacklist
+python -m core.rate_limiter list-whitelist
+python -m core.rate_limiter list-bans
+```
+
+**Monitor violations:**
+```bash
+# View violations
+python -m core.rate_limiter violations
+python -m core.rate_limiter violations --limit 100
+
+# Statistics
+python -m core.rate_limiter stats
+
+# Cleanup expired bans
+python -m core.rate_limiter cleanup
+```
+
+**Tier-based limits:**
+- Tier 0: No limits (internal only)
+- Tier 1: 1000 requests/minute (LAN)
+- Tier 2: 500 requests/minute (VPN)
+- Tier 3: 100 requests/minute (Internet - strict)
 
 ### Audit Logging
 
@@ -499,324 +620,165 @@ All actions are logged by default.
 
 ---
 
-## CLI Reference
+## Firewall & Network Tiers
 
-For full interactive help, run: `./pso --help` or `./pso-menu`
+### Tier System Overview
 
-### Quick Start
+PSO uses a tier-based firewall system to control network access to services. Every service starts at Tier 0 (most secure) and can be promoted to higher tiers as needed.
 
+### Setup
+
+**Install iptables (if not already installed):**
 ```bash
-./pso init                           # Initialize database
-./pso install <service>              # Install a service
-./pso list                           # List installed services
-./pso dashboard start                # Start web UI at :5000
+# Manjaro/Arch
+sudo pacman -S iptables
+sudo systemctl enable iptables
+
+# Ubuntu/Debian
+sudo apt install iptables-persistent
 ```
 
-### Service Catalog
-
-Browse available services:
-
+**Verify installation:**
 ```bash
-./pso catalog                        # Browse all available services
-./pso catalog info <service>         # Get details about a service
-./pso catalog search <query>         # Search by name/category/tag
+python -m core.firewall_manager tiers    # Show tier definitions
+python -m core.firewall_manager list     # List all service tiers
 ```
 
-### Service Management
+### Managing Tiers
 
+**View service tier:**
 ```bash
-# Installation
-./pso install <service> [--dry-run]  # Install service
-./pso uninstall <service>            # Remove service and data
-
-# Control
-./pso start <service>                # Start a service
-./pso stop <service>                 # Stop a service
-./pso restart <service>              # Restart a service
-./pso start-all                      # Start all installed services
-./pso stop-all                       # Stop all running services
-
-# Power management
-./pso pause                          # Stop all services + dashboard (e.g., closing laptop)
-./pso resume                         # Start dashboard + all services (coming back)
-
-# Information
-./pso status <service>               # Service details and health
-./pso logs <service> [lines]         # View logs (default: 100 lines)
-./pso list                           # List all installed services
+python -m core.firewall_manager status <service>
 ```
 
-### Security
-
-#### RBAC (Role-Based Access Control)
-
+**Change tier:**
 ```bash
-./pso rbac status                    # Overview of roles and users
-./pso rbac role list                 # List all roles
-./pso rbac role create <role>        # Create new role
-./pso rbac role delete <role>        # Delete role
-./pso rbac role perms <role>         # Show role permissions
-./pso rbac user assign <user> <role> # Assign role to user
-./pso rbac user revoke <user> <role> # Revoke role from user
-./pso rbac check <user> <permission> # Test if user has permission
+# Promote to LAN access (Tier 1)
+sudo python -m core.firewall_manager set nginx 1
+
+# Restart service to apply
+./pso restart nginx
 ```
 
-#### Secrets Management
-
+**Emergency lockdown:**
 ```bash
-./pso secrets list                   # List all stored secrets (names only)
-./pso secrets set <name> <value> [service]  # Store encrypted secret
-./pso secrets get <name>             # Retrieve and decrypt secret
-./pso secrets delete <name>          # Remove secret
-./pso secrets export                 # Export all secrets to JSON (backup)
+python -m core.firewall_manager reset-all
+# Type 'RESET' to confirm - sets all services to Tier 0
 ```
 
-#### Audit Trail
-
+**View tier history:**
 ```bash
-./pso audit show                     # View full audit trail
-./pso audit show --event <type>      # Filter by event type
-./pso audit show --user <username>   # Filter by user
-./pso audit show --warn              # Show warnings only
-./pso audit stats                    # Summary and top events
+python -m core.firewall_manager history <service>
 ```
 
-#### Rate Limiting
+### Tier Recommendations
 
+| Service Type | Recommended Tier | Notes |
+|--------------|------------------|-------|
+| Databases | Tier 0 | Never expose directly |
+| Family media | Tier 1 | LAN access for household |
+| Remote access | Tier 2 | Use VPN |
+| Public website | Tier 3 | Only if absolutely necessary |
+
+---
+
+## Advanced Features
+
+### Reverse Proxy Setup
+
+**Install Caddy:**
 ```bash
-./pso rate-limit status              # Show stats: violations, bans, blacklist counts
-./pso rate-limit blacklist <ip> --reason "X"    # Permanent IP block + iptables
-./pso rate-limit unblacklist <ip>    # Remove from permanent blacklist
-./pso rate-limit whitelist <ip> --reason "X"    # Whitelist IP (bypass rate limits)
-./pso rate-limit bans                # Show active temporary bans
-./pso rate-limit violations          # Show recent violations log
-./pso rate-limit cleanup             # Remove expired bans
+# Automatic
+sudo python -m core.reverse_proxy install
+
+# Or manual (Arch)
+sudo pacman -S caddy
+sudo systemctl enable caddy
+
+# Or manual (Ubuntu/Debian)
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/caddy-stable-archive-keyring.gpg] https://dl.cloudsmith.io/public/caddy/stable/deb/debian any-version main" | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update
+sudo apt install caddy
 ```
 
-### Network Tier System
-
-Control service exposure (0=Internal, 1=LAN, 2=VPN, 3=Public):
-
+**Generate configuration:**
 ```bash
-./pso tier list                      # Show all service tiers
-./pso tier status <service>          # Check one service's tier
-./pso tier set <service> <0-3>       # Change tier (may need sudo)
-./pso tier history <service>         # Audit log of tier changes
-./pso tier info                      # Explain the tier system
+# For local network
+python -m core.reverse_proxy generate
+
+# For public domain with SSL
+python -m core.reverse_proxy generate \
+    --domain example.com \
+    --email admin@example.com
 ```
 
-**Tier Levels**:
-- **Tier 0 (Internal)**: Localhost only (127.0.0.1)
-- **Tier 1 (LAN)**: Local network only (192.168.x.x)
-- **Tier 2 (VPN)**: VPN clients only
-- **Tier 3 (Public)**: Internet-facing (0.0.0.0)
-
-### Service Discovery
-
+**Manage proxy:**
 ```bash
-./pso discover list                  # Directory of all services + URLs
-./pso discover sync                  # Refresh registry from installed services
-./pso discover info <service>        # Show address, port, status, history
-./pso discover search <query>        # Search service registry
-./pso discover server                # Show host IP and hostname
+# Validate configuration
+python -m core.reverse_proxy validate
+
+# Reload Caddy
+sudo python -m core.reverse_proxy reload
+
+# Check status
+python -m core.reverse_proxy status
+python -m core.reverse_proxy list
 ```
 
-### Dependencies
-
+**Complete workflow:**
 ```bash
-./pso deps                           # Full dependency graph (all services)
-./pso deps <service>                 # Show what service needs and what needs it
-```
+# 1. Install services
+./pso install nginx
+./pso install jellyfin
 
-### Migration & Import
+# 2. Set tiers (only Tier 1+ are proxied)
+sudo python -m core.firewall_manager set nginx 1
+sudo python -m core.firewall_manager set jellyfin 1
 
-Import existing Docker setups:
+# 3. Restart services
+./pso restart nginx
+./pso restart jellyfin
 
-```bash
-./pso migrate status                 # Show managed vs unmanaged containers
-./pso migrate compose <file> [--dry-run]  # Import from docker-compose.yml
-./pso migrate adopt [--all] [<name>]      # Adopt running Docker containers
-./pso migrate export [file]          # Export PSO registry to JSON
-./pso migrate import <file> [--dry-run]   # Import PSO registry from JSON
-```
+# 4. Generate proxy config
+python -m core.reverse_proxy generate --domain myserver.com --email me@example.com
 
-### Backups
+# 5. Validate and reload
+python -m core.reverse_proxy validate
+sudo python -m core.reverse_proxy reload
 
-```bash
-./pso backup create <service> [--note "text"]  # Create backup
-./pso backup restore <service> <id>  # Restore from backup
-./pso backup list [service]          # List backups
-./pso backup verify <id>             # Check backup integrity
-./pso backup prune <service> [--keep N]  # Delete old backups (default: keep 5)
-```
-
-### Updates
-
-```bash
-./pso update check [service]         # Check for available updates
-./pso update apply <service>         # Update service (auto-backup first)
-./pso update history [service]       # Show update log
-```
-
-### Health Monitoring
-
-```bash
-./pso health check <service>         # Run health check now
-./pso health status [service]        # Show current health status
-./pso health history <service>       # Show health check history
-./pso health config <service>        # Show health check configuration
-```
-
-### Logs Aggregation
-
-```bash
-./pso logs-agg tail                  # Live stream all service logs
-./pso logs-agg search <query>        # Search across all logs
-./pso logs-agg errors                # Show recent errors from all services
-./pso logs-agg stats                 # Log volume and error count per service
-./pso logs-agg start                 # Start background collection daemon
+# 6. Test
+curl https://nginx.myserver.com
+curl https://jellyfin.myserver.com
 ```
 
 ### Notifications
 
+**Setup (Linux):**
 ```bash
-./pso notifications status           # Show configured channels and recent alerts
-./pso notifications test email       # Send test email notification
-./pso notifications test webhook     # Send test webhook notification
-./pso notifications config set [options]  # Configure email/webhook/desktop
-./pso notifications history          # View alert history
+sudo apt install libnotify-bin  # Ubuntu/Debian
+sudo pacman -S libnotify        # Arch
 ```
 
-### Resource Management
+**macOS/Windows:** Built-in support, no installation needed.
 
-Control CPU, memory, and disk limits:
-
+**Test notification:**
 ```bash
-# Profiles
-./pso resources profiles             # List all profiles (tiny/small/medium/large/unlimited)
-./pso resources get <service>        # Show current resource limits
-
-# Set limits
-./pso resources set <service> --profile <tiny|small|medium|large|unlimited>
-./pso resources set <service> --cpu <cores> --memory <MB>
-./pso resources set <service> --disk <MB> --restart <policy>
-./pso resources apply <service>      # Apply limits to container
-./pso resources stats <service>      # Live CPU/memory/disk usage
+python -m core.notifications test
+python -m core.notifications test --title "Hello" --message "Test"
 ```
 
-**Resource Profiles**:
-- **tiny**: 0.5 CPU cores, 512MB RAM
-- **small**: 1 CPU core, 1GB RAM
-- **medium**: 2 CPU cores, 2GB RAM
-- **large**: 4 CPU cores, 4GB RAM
-- **unlimited**: No limits
-
-### Metrics
-
+**View history:**
 ```bash
-./pso metrics show                   # Display all latest metric values
-./pso metrics collect                # Run one-time collection
-./pso metrics query <metric> [service]  # Query stored metric history
-./pso metrics export [service]       # Export in Prometheus format
-./pso metrics start                  # Start background metrics collector
+python -m core.notifications history
+python -m core.notifications history --limit 50
 ```
 
-### Grafana Integration
-
-```bash
-./pso grafana status                 # Check Grafana reachability
-./pso grafana provision              # Push PSO dashboard and datasource to Grafana
-./pso grafana serve-metrics          # Start /metrics endpoint on :9090
-./pso grafana install                # Install Grafana via PSO
-```
-
-### User Management
-
-```bash
-./pso user list                      # List all users
-./pso user add <user> <pass>         # Create regular user
-./pso user add-admin <user> <pass>   # Create admin user
-./pso user cleanup                   # Remove expired sessions
-```
-
-### Port Management
-
-```bash
-./pso ports                          # Show all port allocations
-./pso ports available                # List free ports
-./pso ports check <port>             # Check if specific port is free
-```
-
-### Dashboard Commands
-
-```bash
-./pso dashboard start                # Start web UI
-./pso dashboard stop                 # Stop web UI
-./pso dashboard status               # Check dashboard status
-./pso dashboard restart              # Restart dashboard
-./pso dashboard logs                 # View dashboard logs
-```
-
-### System Commands
-
-```bash
-./pso init                           # Initialize PSO database
-./pso doctor                         # Run system diagnostics
-./pso fix-blockers                   # Auto-fix common issues
-./pso version                        # Show PSO version and development progress
-./pso dev scan                       # Scan development progress
-./pso dev tree                       # Show development component tree
-./pso dev status                     # Show development status
-```
-
-### Testing & Validation
-
-```bash
-./pso-check                          # Full automated test suite
-./pso-check --quick                  # Structural checks only
-./pso-check --functional             # Functional tests only
-./pso-check --cli-only               # CLI command tests only
-./pso-check --manifests              # Manifest and asset checks only
-./pso-check --tests                  # Run existing test suite only
-```
-
-### Common Workflows
-
-**Pause everything (closing laptop)**:
-```bash
-./pso pause                          # Stop all services + dashboard
-./pso resume                         # Bring everything back up
-```
-
-**Install and configure**:
-```bash
-./pso install jellyfin
-sudo ./pso tier set jellyfin 1       # Make accessible on LAN
-./pso resources set jellyfin --profile medium
-./pso discover info jellyfin
-```
-
-**Backup, update, verify**:
-```bash
-./pso backup create nginx --note "pre-update"
-./pso update apply nginx
-./pso health check nginx
-```
-
-**Monitor performance**:
-```bash
-./pso resources stats nginx
-./pso metrics query service_cpu_percent nginx
-./pso logs nginx 200
-```
-
-**Troubleshoot**:
-```bash
-./pso status nginx
-./pso logs nginx 500
-./pso health history nginx
-./pso restart nginx
-```
+**Automatic notifications sent for:**
+- Health check failures
+- Successful updates
+- Backup completion
+- Security tier changes
 
 ---
 
