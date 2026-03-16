@@ -180,7 +180,7 @@
 - **Local AI**: Privacy-focused AI that never sends data externally
 - **Federation**: Geographic distribution for redundancy and performance
 - **Marketplace**: Monetize unused compute resources
-- **Open Source**: Core features should be open source to build community trust
+- **Open Source**: Core features should be open source
 
 ---
 

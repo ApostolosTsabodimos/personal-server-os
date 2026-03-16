@@ -8,7 +8,7 @@
 
 ## What is PSO?
 
-PSO is a **complete service management platform** that makes self-hosting easy and secure. Install services with a single command, manage them through a beautiful dashboard, and control access with a tier-based security system.
+PSO is a **complete service management platform** that makes self-hosting easy and secure. Install services with a single command, manage them through a dashboard, and control access with a tier-based security system.
 
 **Core Features:**
 - **One-command installation** - `./pso install jellyfin`
