@@ -93,9 +93,9 @@ For detailed installation instructions, see [INSTALL.md](docs/INSTALL.md)
 ## Documentation
 
 - **[Installation Guide](docs/INSTALL.md)** - Step-by-step setup instructions
-- **[User Guide](docs/USER_GUIDE.md)** - How to use PSO features
+- **[User Guide](docs/USER_GUIDE.md)** - Complete guide to using PSO
+- **[Reference](docs/REFERENCE.md)** - CLI commands, API endpoints, technical details
 - **[Architecture](docs/ARCHITECTURE.md)** - System design and components
-- **[Contributing](docs/CONTRIBUTING.md)** - How to contribute to PSO
 - **[Roadmap](ROADMAP.md)** - Future features and development plans
 
 ---
@@ -150,6 +150,19 @@ Access the dashboard at `http://localhost:5000`
 
 ---
 
+## Security Tiers
+
+PSO uses a **tier-based firewall system** to control network exposure:
+
+- **Tier 0 (Internal)**: Localhost only - most secure (default)
+- **Tier 1 (LAN)**: Local network access - for family services
+- **Tier 2 (VPN)**: VPN access only - for remote access
+- **Tier 3 (Public)**: Internet-facing - use sparingly
+
+All services start at Tier 0 and can be promoted as needed. See [docs/INSTALL.md](docs/INSTALL.md#understanding-security-tiers-the-way-of-the-onion) for details.
+
+---
+
 ## Security
 
 PSO implements multiple security layers:
@@ -166,8 +179,9 @@ PSO implements multiple security layers:
 - No external network access by default
 - Secrets stored encrypted on disk
 - Password hashing with bcrypt
+- Tier-based firewall system for controlled network exposure
 
-See [Security Practices](docs/SETUP_GUIDES.md#security-hardening)
+See [Security Settings](docs/USER_GUIDE.md#security-settings) and [Firewall & Tiers](docs/USER_GUIDE.md#firewall--network-tiers) for details
 
 ---
 
