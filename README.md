@@ -212,7 +212,7 @@ See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed design.
 
 ### Current Status: Phase 1 (Prototype)
 
-**Completed** ✅
+**Completed** 
 - Service installation and management
 - Web dashboard with authentication
 - Docker integration
@@ -220,13 +220,13 @@ See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed design.
 - Backup system
 - Activity logging
 
-**In Progress** 🚧
+**In Progress** 
 - Security hardening (rate limiting, 2FA)
 - Real-time WebSocket updates
 - Comprehensive documentation
 - Cross-platform testing
 
-**Planned** 📋
+**Planned** 
 - Local AI integration (Ollama)
 - Multi-server federation
 - Vite build system migration
@@ -286,36 +286,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-PSO is built on top of excellent open-source projects:
+PSO is built on top of open-source projects:
 
 - **Docker** - Container runtime
 - **Flask** - Web framework
 - **React** - UI library
 - **SQLite** - Database
-- All the amazing service developers (Jellyfin, Nextcloud, Pi-hole, etc.)
-
----
-
-## Support
-
-- **Documentation**: [docs/](docs/)
-- **Issues**: [GitHub Issues](https://github.com/ApostolosTsampodimos/personal-server-os/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/ApostolosTsampodimos/personal-server-os/discussions)
-
----
-
-## Disclaimer
-
-PSO is currently in **prototype stage** (v0.1.0). It's functional but not yet production-ready. Use at your own risk and always maintain backups of important data.
-
-**Not recommended for**:
-- Production environments with critical data
-- Public-facing deployments without additional security hardening
-- Enterprise use cases (yet!)
-
-**Perfect for**:
-- Home labs and personal servers
-- Learning Docker and self-hosting
-- Testing and development
-- Privacy-focused individuals
-
+- All the service developers (Jellyfin, Nextcloud, Pi-hole, etc.)
